@@ -457,7 +457,13 @@ function extrasEval(majorRes){
 
 /* ---------- starter plan for a major ---------- */
 const termSig = terms => JSON.stringify(Object.keys(terms||{}).sort().map(t=>[t,(terms[t]||[]).map(c=>[c.code,c.units,c.done,c.bucket,c.tag])]));
-const isUntouchedStarter = () => !!state.starterSig && termSig(state.terms)===state.starterSig;
+const codeSig = terms => JSON.stringify(Object.keys(terms||{}).sort().map(t=>[t,(terms[t]||[]).map(c=>c.code)]));
+const isUntouchedStarter = () => {
+  if(state.starterSig) return termSig(state.terms)===state.starterSig;
+  /* plans saved before this check existed: untouched if nothing is ticked and the courses match the major's sample */
+  const all = Object.values(state.terms||{}).flat();
+  return all.length>0 && !all.some(c=>c.done) && codeSig(state.terms)===codeSig(starterPlan(state.major).terms);
+};
 function withStarter(mkey, keep){
   const p = starterPlan(mkey);
   p.starterSig = termSig(p.terms);
