@@ -456,6 +456,13 @@ function extrasEval(majorRes){
 }
 
 /* ---------- starter plan for a major ---------- */
+const termSig = terms => JSON.stringify(Object.keys(terms||{}).sort().map(t=>[t,(terms[t]||[]).map(c=>[c.code,c.units,c.done,c.bucket,c.tag])]));
+const isUntouchedStarter = () => !!state.starterSig && termSig(state.terms)===state.starterSig;
+function withStarter(mkey, keep){
+  const p = starterPlan(mkey);
+  p.starterSig = termSig(p.terms);
+  return Object.assign(p, keep||{});
+}
 function starterPlan(mkey){
   const prog = P.MAJORS[mkey]; const codes=[];
   const ieInPool = prog.groups.some(g=>(g.checks||[]).some(ch=>ch.t==="ie"));
@@ -837,11 +844,15 @@ function fillPickers(){
   document.querySelectorAll(".mn-sel").forEach(s=>{ s.innerHTML = `<option value="">None</option>` + Object.entries(P.MINORS).map(([k,p])=>opt(k,p)).join(""); });
 }
 $("#maj-sel").onchange=e=>{
+  if(isUntouchedStarter()){
+    const keep={second:state.second, minors:state.minors};
+    state = withStarter(e.target.value, keep);
+  }
   state.major=e.target.value;
   const bad=[state.second,...(state.minors||[])].filter(k=>k && (EXTRA[k].not||[]).includes(state.major));
   if(bad.length){ state.second = bad.includes(state.second)?null:state.second; state.minors=(state.minors||[]).filter(k=>!bad.includes(k)); }
   save(); render();
-  toast(`Requirements switched to ${major().name}${bad.length?". Removed a programme not open to this major":""}`);
+  toast(`Switched to ${major().name}${state.starterSig && isUntouchedStarter()?", with its sample plan":""}${bad.length?". Removed a programme not open to this major":""}`);
 };
 $("#sm-sel").onchange=e=>{ state.second=e.target.value||null; save(); render(); if(state.second) toast(`Second major in ${EXTRA[state.second].name} added to the requirements panel`); };
 document.querySelectorAll(".mn-sel").forEach((sel,i)=>{ sel.onchange=e=>{
@@ -849,12 +860,28 @@ document.querySelectorAll(".mn-sel").forEach((sel,i)=>{ sel.onchange=e=>{
   state.minors=m.filter((k,j,a)=>k && a.indexOf(k)===j); save(); render();
   if(e.target.value) toast(`Minor in ${EXTRA[e.target.value].name} added to the requirements panel`);
 }; });
+function welcome(){
+  const opts = Object.entries(P.MAJORS).map(([k,p])=>`<option value="${k}">${esc(p.name)}</option>`).join("");
+  openDlg(`<div><div class="eyebrow">Welcome</div><h2 style="font-size:1.3rem">Plan your NUS SoC degree</h2></div>
+    <p style="margin:0;color:var(--muted)">Pick your major to preview its sample plan behind this box: every required course already placed across 4 years. Start from it, or with an empty plan. You can change both later. Your plan is saved only in this browser.</p>
+    <label>Your major<select id="w-major">${opts}</select></label>
+    <div class="dlg-f"><button type="button" class="btn" id="w-empty">Start empty</button><button type="button" class="btn primary" id="w-starter">Start with sample plan</button></div>`);
+  $("#w-major").onchange=e=>{ state=withStarter(e.target.value); render(); };
+  const go = starter=>{
+    const m=$("#w-major").value;
+    state = starter ? withStarter(m) : {v:2,major:m,second:null,minors:[],showST:{},terms:{}};
+    save(); render(); closeDlg();
+    toast(starter ? "Sample plan ready. Add your electives and tick what you've passed." : "Empty plan ready. Type a course code into any semester.");
+  };
+  $("#w-starter").onclick=()=>go(true);
+  $("#w-empty").onclick=()=>go(false);
+}
 $("#btn-reset").onclick=()=>{
-  openDlg(`<h2>Reset the planner</h2><p style="margin:0;color:var(--muted)">This replaces everything on the page. Export first if you want a copy. The starter plan places every required course for ${esc(major().name)} across 4 years; you add your electives.</p>
-    <div class="dlg-f"><button type="button" class="btn" id="r-cancel">Cancel</button><div><button type="button" class="btn" id="r-clear">Start empty</button><button type="button" class="btn primary" id="r-sample">Load starter plan</button></div></div>`);
+  openDlg(`<h2>Reset the planner</h2><p style="margin:0;color:var(--muted)">This replaces everything on the page. Export first if you want a copy. The sample plan places every required course for ${esc(major().name)} across 4 years; you add your electives.</p>
+    <div class="dlg-f"><button type="button" class="btn" id="r-cancel">Cancel</button><div><button type="button" class="btn" id="r-clear">Start empty</button><button type="button" class="btn primary" id="r-sample">Load sample plan</button></div></div>`);
   $("#r-cancel").onclick=closeDlg;
   $("#r-clear").onclick=()=>{ state={v:2,major:state.major,second:state.second,minors:state.minors||[],showST:{},terms:{}}; save(); render(); closeDlg(); toast("Planner cleared"); };
-  $("#r-sample").onclick=()=>{ const keep={second:state.second,minors:state.minors}; state=Object.assign(starterPlan(state.major),keep); save(); render(); closeDlg(); toast("Starter plan loaded"); };
+  $("#r-sample").onclick=()=>{ state=withStarter(state.major,{second:state.second,minors:state.minors}); save(); render(); closeDlg(); toast("Sample plan loaded. Switch major above to see another major's sample"); };
 };
 $("#btn-io").onclick=()=>{
   openDlg(`<h2>Export / Import</h2><label>Your plan as text. Copy it to back up, or paste a saved plan and press Import.<textarea id="io-t">${esc(JSON.stringify(state))}</textarea></label>
@@ -973,11 +1000,12 @@ function issues(c, termId){
 
 (function boot(){
   try{ const raw=localStorage.getItem(LS); if(raw) state=normalize(JSON.parse(raw)); }catch(_){}
-  if(!state) state=starterPlan("cs");
+  const firstVisit = !state;
+  if(!state) state=withStarter("cs");
   fillPickers();
   const dl=$("#catalog"); dl.innerHTML = CAT.map(c=>`<option value="${c[0]}">${esc(c[1])}</option>`).join("") + Object.keys(PH).map(k=>`<option value="${k}">${esc(PH[k].title)}</option>`).join("");
   render();
-  if(state.starter) toast("Starter plan loaded. Pick your major above, then edit it to match your courses.");
+  if(firstVisit) welcome();
   loadList();
 })();
 })();

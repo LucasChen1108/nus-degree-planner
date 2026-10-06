@@ -189,7 +189,7 @@ const MAJORS = {
     name:"Information Security", degree:"B.Comp. (Information Security)", cohort:"Cohorts AY2025/26 and AY2026/27", units:160,
     sources:[{label:"InfoSec cohort 2025/26", url:SOC+"isc/isc-25-26/"}],
     groups:[
-      ...pillars({dl:["CS1010%","CS1101S"], ce:["GEX%"], dat:DATA_LIT}),
+      ...pillars({dl:["CS1010","CS1010%","CS1101S"], ce:["GEX%"], dat:DATA_LIT}),
       {k:"found", name:"Computing Foundation", short:"Found.", units:32, reqs:[
         {label:"CS1231S Discrete Structures", any:["CS1231S","CS1231"]},
         {label:"CS2030 Programming Methodology II", any:["CS2030","CS2030S"]},
