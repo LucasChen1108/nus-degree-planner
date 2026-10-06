@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Plan your 4-year NUS Computer Science degree: track units per requirement, focus areas, internships and a Mathematics second major, with live course data from NUSMods.">
+<meta name="description" content="Plan your 4-year NUS School of Computing degree (CS, AI, Business Analytics, BAIS, InfoSec) with second majors and minors: track every requirement, with live course data from NUSMods.">
 <meta name="theme-color" content="#e0730f">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231d3f73'/%3E%3Crect x='6' y='8' width='20' height='3' rx='1.5' fill='%23fff'/%3E%3Crect x='6' y='14.5' width='14' height='3' rx='1.5' fill='%23e0730f'/%3E%3Crect x='6' y='21' width='9' height='3' rx='1.5' fill='%23fff'/%3E%3C/svg%3E">
-<title>NUS CS Degree Planner</title>
+<title>NUS SoC Degree Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
@@ -59,9 +59,16 @@ button{cursor:pointer}
 .top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
 .top p{margin:4px 0 0;color:var(--muted);max-width:62ch}
 .tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.sm-pick{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted)}
-.sm-pick select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 8px;color:var(--ink)}
-.req.ma2{border-color:var(--navy)}
+.progbar{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.progbar label{display:flex;flex-direction:column;gap:4px;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;min-width:0}
+.progbar select{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 9px;color:var(--ink);font-size:.9rem;text-transform:none;letter-spacing:0;font-weight:500;width:100%}
+.progbar label.major select{border-color:var(--accent)}
+.req.extra{border-color:var(--navy)}
+.bk.ex{background:var(--navy-soft);color:var(--navy)}
+.warn-text{color:var(--bad);font-weight:600}
+.sources{font-size:.76rem;color:var(--muted)}
+.sources a{color:var(--navy)}
+@media (max-width:900px){.progbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .sync{font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:6px}
 .sync i{width:8px;height:8px;border-radius:50%;background:var(--warn);display:inline-block}
 .sync.cloud i{background:var(--ok)}
@@ -174,18 +181,23 @@ body.is-dragging *{cursor:grabbing!important}
 <div class="wrap">
   <header class="top">
     <div>
-      <div class="eyebrow">B.Comp. Computer Science · 160 units</div>
-      <h1>NUS CS Degree Planner</h1>
+      <div class="eyebrow" id="deg-line">B.Comp. (Computer Science) · 160 units</div>
+      <h1>NUS SoC Degree Planner</h1>
       <p>Tick a course when you've passed it. Type any NUS course code into any term to add it, and drag courses between semesters. Units count toward requirements automatically; overflow goes to Unrestricted Electives.</p>
     </div>
     <div class="tools">
-      <label class="sm-pick" for="sm-sel">Second major
-        <select id="sm-sel"><option value="">None</option><option value="math">Mathematics</option></select></label>
       <span class="sync" id="sync"><i></i><span>Loading NUSMods…</span></span>
       <button class="btn" id="btn-io" type="button">Export / Import</button>
       <button class="btn" id="btn-reset" type="button">Reset…</button>
     </div>
   </header>
+
+  <section class="progbar" aria-label="Your programme">
+    <label class="major" for="maj-sel">Major<select id="maj-sel"></select></label>
+    <label for="sm-sel">Second major<select id="sm-sel"></select></label>
+    <label for="mn-sel0">Minor<select id="mn-sel0" class="mn-sel"></select></label>
+    <label for="mn-sel1">Second minor<select id="mn-sel1" class="mn-sel"></select></label>
+  </section>
 
   <section class="summary" aria-label="Progress summary">
     <div>
@@ -202,12 +214,14 @@ body.is-dragging *{cursor:grabbing!important}
     <div class="years" id="years"></div>
   </div>
 
-  <p class="note">Unofficial student-made tool. Not affiliated with or endorsed by NUS. Course data comes live from the <a href="https://nusmods.com" target="_blank" rel="noopener">NUSMods</a> API. Requirements follow the B.Comp. (Computer Science) curriculum for recent cohorts and the Mathematics second major for AY2021/22 onwards; they change by intake year, so always confirm with your EduRec degree audit. Your plan is saved only in this browser. Use Export to back it up.</p>
+  <p class="note">Unofficial student-made tool. Not affiliated with or endorsed by NUS. Course data comes live from the <a href="https://nusmods.com" target="_blank" rel="noopener">NUSMods</a> API. Requirements follow each programme's official page for recent cohorts and change by intake year, so always confirm with your EduRec degree audit. Your plan is saved only in this browser. Use Export to back it up.</p>
+  <p class="sources" id="sources"></p>
 </div>
 
 <datalist id="catalog"></datalist>
 <div id="dlg-root"></div>
 
+<script src="programmes.js"></script>
 <script>
 (function(){
 "use strict";
@@ -230,39 +244,23 @@ const CAT = [
  ["CP3108A","Independent Work",2],["CP3108B","Independent Work",4],["CFG1002","Career Catalyst",2],["CFG1004","Financial Readiness for Young Professionals",2],
  ["MA1100","Basic Discrete Mathematics",4],["MA2101","Linear Algebra II",4],["MA2104","Multivariable Calculus",4],["MA2108","Mathematical Analysis I",4],
  ["MA2116","Probability",4],["MA2311","Techniques in Advanced Calculus",4],["ST2131","Probability",4],
+ ["CS2251","Optimization for Machine Learning",4],["CS3263","Foundations of Artificial Intelligence",4],["CS3264","Foundations of Machine Learning",4],["CS3268","Responsible AI: from Algorithms to Impact",4],
+ ["CS1010A","Programming Methodology",4],["CS2030","Programming Methodology II",4],["CS2040","Data Structures and Algorithms",4],["CS2040C","Data Structures and Algorithms",4],
+ ["BT2101","Econometrics Modeling for Business Analytics",4],["BT2102","Data Management and Visualisation",4],["BT3103","Application Systems Development for Business Analytics",4],
+ ["BT4103","Business Analytics Capstone Project",8],["BT4101","B.Sc. Dissertation",12],["IS2101","Business and Technical Communication",4],["IS3103","Information Systems Leadership and Communication",4],
+ ["IS2108","Full-stack Software Engineering for AI Solutions I",4],["IS2109","AI and Machine Learning Techniques I",4],["IS4108","AI Solutioning Capstone Project",8],
+ ["CS2105","Introduction to Computer Networks",4],["CS2107","Introduction to Information Security",4],["CS3235","Computer Security",4],["IS4231","Information Security Management",4],
+ ["IFS4205","Information Security Capstone Project",8],["IS4010","Digital Transformation Leadership Programme",12],["CP3202","Internship II",6],["CP3107","Computing for Social Service Agencies I",6],["CP3110","Computing for Social Service Agencies II",6],
+ ["ST1131","Introduction to Statistics and Statistical Computing",4],["ST2132","Mathematical Statistics",4],["ST3131","Regression Analysis",4],["QF1100","Introduction to Quantitative Finance",4],
+ ["EC1101E","Introduction to Economic Analysis",4],["EC2101","Microeconomic Analysis I",4],["EC2102","Macroeconomic Analysis I",4],
  ["MA3201","Algebra II",4],["MA3210","Mathematical Analysis II",4],["MA3220","Ordinary Differential Equations",4],
  ["MA3236","Non-Linear Programming",4],["MA3238","Stochastic Processes I",4],["MA3252","Linear and Network Optimisation",4]
 ];
 const CATMAP = Object.fromEntries(CAT.map(c=>[c[0],{title:c[1],units:c[2]}]));
 
-/* ---------- requirements ---------- */
-const BUCKETS = [
- {k:"dl",  g:"Common Curriculum", name:"Digital Literacy", cap:4},
- {k:"ce",  g:"Common Curriculum", name:"Critique & Expression", cap:4},
- {k:"cc",  g:"Common Curriculum", name:"Cultures & Connections", cap:4},
- {k:"dat", g:"Common Curriculum", name:"Data Literacy", cap:4},
- {k:"ss",  g:"Common Curriculum", name:"Singapore Studies", cap:4},
- {k:"ceng",g:"Common Curriculum", name:"Communities & Engagement", cap:4},
- {k:"eth", g:"Common Curriculum", name:"Computing Ethics", cap:4},
- {k:"idcd",g:"Common Curriculum", name:"Interdisciplinary / Cross-disciplinary", cap:12},
- {k:"found",g:"Programme", name:"CS Foundation", cap:36},
- {k:"bd",  g:"Programme", name:"CS Breadth & Depth", cap:32},
- {k:"math",g:"Programme", name:"Mathematics & Sciences", cap:12},
- {k:"ue",  g:"Electives", name:"Unrestricted Electives", cap:40}
-];
-const BK = Object.fromEntries(BUCKETS.map(b=>[b.k,b]));
-const SHORT = {dl:"Pillar",ce:"Pillar",cc:"Pillar",dat:"Pillar",ss:"Pillar",ceng:"Pillar",eth:"Ethics",idcd:"ID/CD",found:"Found.",bd:"B&D",math:"Math",ue:"UE"};
-const FOUND = ["CS1231S","CS2030S","CS2040S","CS2100","CS2101","CS2103T","CS2106","CS2109S","CS3230"];
-const FOUND_ALT = {CS2103:"CS2103T"};
-const MATH = ["MA1521","MA1522","ST2334"];
-const DATA_LIT = ["GEA1000","BT1101","ST1131","DSA1101"];
-const IE = ["CP3200","CP3880"];
-const FOCUS = {
-  "Software Engineering":["CS3219","CS4211","CS4218","CS4239"],
-  "Artificial Intelligence":["CS3243","CS3244","CS4244","CS4246","CS4248","CS4243"]
-};
-const TOTAL = 160;
-
+/* ---------- programmes & terms ---------- */
+const P = window.PROGRAMMES;
+const EXTRA = Object.assign({}, P.SECOND, P.MINORS);
 const TERMS = [];
 for(let y=1;y<=4;y++){ TERMS.push({id:`Y${y}S1`,y,label:"Semester 1"}); TERMS.push({id:`Y${y}S2`,y,label:"Semester 2"}); TERMS.push({id:`Y${y}ST`,y,label:"Special Term",st:true}); }
 const TERM_IDX = Object.fromEntries(TERMS.map((t,i)=>[t.id,i]));
@@ -272,130 +270,215 @@ let seq = 1;
 const uid = ()=> "c"+Date.now().toString(36)+(seq++);
 function mk(code,done,extra){
   code = code.toUpperCase();
-  const c = CATMAP[code];
-  return Object.assign({id:uid(),code,title:c?c.title:"",units:c?c.units:4,done:!!done,bucket:"auto",tag:""},extra||{});
+  const c = CATMAP[code], n = (typeof NM!=="undefined" && NM.byCode[code]) || null;
+  return Object.assign({id:uid(),code,title:c?c.title:(n?n.title:""),units:c?c.units:4,done:!!done,bucket:"auto",tag:""},extra||{});
 }
 const PH = {
-  GES:{title:"Singapore Studies course (pick any GES)"},
-  GEN:{title:"Communities & Engagement course (pick any GEN)"},
-  HS:{title:"Interdisciplinary course (pick one)",tag:"ID"},
-  UE:{title:"Unrestricted elective (any course)",bucket:"ue"},
-  MA3XXX:{title:"Level-3000+ math course (MA32xx / MA42xx)",q:"MA3"}
+  GEC:{title:"Cultures & Connections course (any GEC)", as:"GEC0000"},
+  GES:{title:"Singapore Studies course (any GES)", as:"GES0000"},
+  GEN:{title:"Communities & Engagement course (any GEN)", as:"GEN0000"},
+  GEX:{title:"Critique & Expression course (any GEX)", as:"GEX0000"},
+  HS:{title:"Interdisciplinary course (pick one)", tag:"ID", as:"HS0000"},
+  UE:{title:"Unrestricted elective (any course)", bucket:"ue"},
+  CS3XXX:{title:"Level-3000 CS elective", q:"CS3", as:"CS3000"},
+  CS4XXX:{title:"Level-4000 CS elective", q:"CS4", as:"CS4000"},
+  MA3XXX:{title:"Level-3000+ math course (MA32xx / MA42xx)", q:"MA3", as:"MA3200"}
 };
-function ph(code,done){ return mk(code,done,PH[code]); }
-function samplePlan(){
-  return {v:1, showST:{}, terms:{
-    Y1S1:["CS1101S","CS1231S","MA1521","GEA1000","ES2660"].map(c=>mk(c,true)),
-    Y1S2:[mk("CS2030S",true),mk("CS2040S",true),mk("MA1522",true),mk("IS1108",true),ph("GES",true)],
-    Y2S1:[mk("CS2100"),mk("CS2103T"),mk("CS2101"),mk("ST2334"),mk("GEC1024",false,{title:"Cultures & Connections course"}),mk("HSH1000",false,{title:"Interdisciplinary course"})],
-    Y2S2:[mk("CS2106"),mk("CS2109S"),mk("CS3230"),ph("GEN"),ph("HS")],
-    Y3S1:[mk("CS3219"),mk("CS3243"),mk("CS3244"),ph("HS"),ph("UE")],
-    Y3S2:[mk("CP3880"),ph("UE")],
-    Y4S1:[mk("CS4218"),mk("CS4248"),ph("UE"),ph("UE"),ph("UE")],
-    Y4S2:[mk("CS4243"),mk("CS4239"),ph("UE"),ph("UE"),ph("UE")]
-  }, sample:true};
-}
+function ph(code,done){ const p=PH[code]; return mk(code,done,{title:p.title, tag:p.tag||"", bucket:p.bucket||"auto"}); }
 let state = null;
+const major = ()=> P.MAJORS[state.major] || P.MAJORS.cs;
+const extras = ()=> [state.second, ...(state.minors||[])].filter(k=>k && EXTRA[k]);
 
-/* ---------- classification ---------- */
+/* ---------- matching ---------- */
 const isPh = c => !!PH[c.code] || !/\d/.test(c.code);
-const level = c => { const m = c.code.match(/^[A-Z]+(\d)/); return m?+m[1]:0; };
+const codeOf = c => c.tag==="IE" ? "CP3200" : ((PH[c.code] && PH[c.code].as) || c.code);
+const levelOf = code => { const m = code.match(/^[A-Z]+(\d)/); return m?+m[1]:0; };
+const level = c => levelOf(codeOf(c));
 function isID(c){ return c.tag==="ID" || (!c.tag && /^HS[A-Z]?\d|^HS$/.test(c.code)); }
 function isCD(c){ return c.tag==="CD"; }
-function isIE(c){ return IE.includes(c.code) || c.tag==="IE"; }
-function home(c){
-  if(c.bucket && c.bucket!=="auto") return c.bucket;
-  const k=c.code;
-  if(k==="CS1101S") return "dl";
-  if(k==="ES2660"||/^UTW|^RVX/.test(k)) return "ce";
-  if(/^GEC/.test(k)) return "cc";
-  if(DATA_LIT.includes(k)) return "dat";
-  if(/^GES/.test(k)) return "ss";
-  if(/^GEN/.test(k)) return "ceng";
-  if(k==="IS1108") return "eth";
-  if(isID(c)||isCD(c)) return "idcd";
-  if(FOUND.includes(k)||FOUND_ALT[k]) return "found";
-  if(MATH.includes(k)) return "math";
-  if(/^(CS|IFS|CP)/.test(k)||isIE(c)) return "bd";
-  return "ue";
+const RX = {};
+function rx(p){ if(RX[p]) return RX[p]; let s=p.replace(/%/g,".*").replace(/x/g,"\\d"); if(/x$/.test(p)) s+="[A-Z]?"; return RX[p]=new RegExp("^"+s+"$"); }
+function tok(p,c,code){
+  if(p==="@ID") return isID(c);
+  if(p==="@CD") return isCD(c);
+  const m=p.match(/^@(\d)(\+?)$/);
+  if(m){ const L=levelOf(code); return m[2] ? L>=+m[1] : L===+m[1]; }
+  return rx(p).test(code);
 }
+function match(any,c){
+  const code=codeOf(c); let hit=false;
+  for(const p of any){
+    if(p[0]==="!"){ if(tok(p.slice(1),c,code)) return false; }
+    else if(!hit && tok(p,c,code)) hit=true;
+  }
+  return hit;
+}
+const concrete = p => p[0]!=="!" && p[0]!=="@" && !/[%\[]/.test(p) && !/x/.test(p);
+function quickCode(any){
+  const c = any.find(concrete); if(c) return c;
+  for(const p of any){ const m=p.match(/^(GE[CSNX])%$/); if(m) return m[1]; }
+  return null;
+}
+
+/* ---------- engine ---------- */
 function ordered(){
   const out=[];
   TERMS.forEach(t=> (state.terms[t.id]||[]).forEach(c=>out.push({c,t:t.id})));
   return out;
 }
-/* allocate units into buckets in term order; overflow -> UE */
-function allocate(){
-  const used = Object.fromEntries(BUCKETS.map(b=>[b.k,{pl:0,dn:0}]));
-  let ieUnits=0, cpOther=0;
+const U = arr => arr.reduce((s,c)=>s+(+c.units||0),0);
+function evaluate(prog, isMajor, rank){
+  const gs = prog.groups.map(g=>({g, items:[], pl:0, dn:0, capU:(g.caps||[]).map(()=>0),
+    slots:(g.reqs||[]).map(r=>({r, items:[], u:0}))}));
   const where = {};
-  ordered().forEach(({c})=>{
-    let b = home(c);
-    const u = +c.units||0;
-    if(b==="bd"){
-      if(isIE(c)||c.code==="CP4101"){ if(ieUnits>=12) b="ue"; else ieUnits+=u; }
-      else if(/^CP/.test(c.code)){ if(cpOther>=12) b="ue"; else cpOther+=u; }
+  const slotFull = s => s.r.units ? s.u>=s.r.units : s.items.length>=(s.r.pick||1);
+  const slotNeed = s => slotFull(s) ? 0 : (s.r.units ? s.r.units-s.u : ((s.r.pick||1)-s.items.length)*4);
+  const put = (G,c,s)=>{ const u=+c.units||0; G.items.push(c); G.pl+=u; if(c.done) G.dn+=u; if(s){ s.items.push(c); s.u+=u; } where[c.id]=G.g.k; };
+  const ueG = gs.find(G=>G.g.ue);
+  const seqd = ordered().map((o,i)=>({c:o.c,i,r:rank?rank(o.c):0})).sort((a,b)=>(a.r-b.r)||(a.i-b.i));
+  for(const {c} of seqd){
+    if(isMajor && c.bucket && c.bucket!=="auto"){ const G=gs.find(G=>G.g.k===c.bucket); if(G){ put(G,c,null); continue; } }
+    if(isMajor && c.bucket==="ue" && ueG){ put(ueG,c,null); continue; }
+    let placed=false;
+    for(const G of gs){
+      for(const s of G.slots){ if(!slotFull(s) && match(s.r.any,c)){ put(G,c,s); placed=true; break; } }
+      if(placed) break;
     }
-    if(b!=="ue" && used[b].pl>=BK[b].cap) b="ue";
-    where[c.id]=b;
-    used[b].pl+=u; if(c.done) used[b].dn+=u;
-  });
-  return {used,where};
-}
-function bdChecks(){
-  const pool = ordered().map(o=>o.c).filter(c=>home(c)==="bd");
-  const has = (codes,doneOnly)=> codes.filter(k=>pool.some(c=>c.code===k && (!doneOnly||c.done)));
-  const focus = Object.entries(FOCUS).map(([name,codes])=>{
-    const ev = d=>{ const got=has(codes,d); return {got, ok: got.length>=3 && got.some(k=>+k.match(/\d/)[0]>=4)}; };
-    return {name, plan:ev(false), done:ev(true)};
-  });
-  const sumU = (f,d)=> pool.filter(c=>f(c)&&(!d||c.done)).reduce((s,c)=>s+(+c.units||0),0);
-  const lvl4 = c=> level(c)>=4 && !isIE(c) && c.code!=="CP4101";
-  const ie = c=> isIE(c);
-  const diss = pool.some(c=>c.code==="CP4101"), dissDone = pool.some(c=>c.code==="CP4101"&&c.done);
-  const iePl=sumU(ie,false), ieDn=sumU(ie,true);
-  return {
-    focus,
-    l4:{pl:sumU(lvl4,false), dn:sumU(lvl4,true)},
-    ie:{pl:iePl, dn:ieDn, diss, dissDone, okPl: (iePl>=6)||diss, okDn:(ieDn>=6)||dissDone}
-  };
-}
-function idcdChecks(){
+    if(placed) continue;
+    for(const G of gs){
+      if(!G.g.pool || !match(G.g.pool,c)) continue;
+      const need = G.slots.reduce((a,s)=>a+slotNeed(s),0);
+      if(G.pl + need >= G.g.units) continue;
+      const caps = G.g.caps||[];
+      if(caps.some((cp,i)=>match(cp.any,c) && G.capU[i]>=cp.max)) continue;
+      caps.forEach((cp,i)=>{ if(match(cp.any,c)) G.capU[i]+=+c.units||0; });
+      put(G,c,null); placed=true; break;
+    }
+    if(!placed && ueG) put(ueG,c,null);
+  }
   const all = ordered().map(o=>o.c);
-  const ids = all.filter(c=>isID(c)&&home(c)==="idcd"), cds = all.filter(c=>isCD(c)&&home(c)==="idcd");
-  return {idPl:ids.length, idDn:ids.filter(c=>c.done).length, cdPl:cds.length};
+  /* repair: swap pool courses with spare ones so minUnits / minCount rules are met, as a degree audit would */
+  const capHit = (G,c)=> (G.g.caps||[]).some(cp=>match(cp.any,c));
+  gs.forEach(G=>{
+    if(!G.g.pool) return;
+    (G.g.checks||[]).filter(ch=>ch.t==="minUnits"||ch.t==="minCount").forEach(ch=>{
+      for(let guard=0; guard<20; guard++){
+        const have = ch.t==="minUnits" ? U(G.items.filter(c=>match(ch.any,c))) : G.items.filter(c=>match(ch.any,c)).length;
+        if(have>=ch.n) break;
+        const slotted = new Set(G.slots.flatMap(s=>s.items.map(c=>c.id)));
+        const others = (G.g.checks||[]).filter(o=>o!==ch && (o.t==="minUnits"||o.t==="minCount"));
+        const out = G.items.find(c=>!slotted.has(c.id) && !match(ch.any,c) && !capHit(G,c) && !others.some(o=>match(o.any,c)))
+                 || G.items.find(c=>!slotted.has(c.id) && !match(ch.any,c) && !capHit(G,c));
+        const inn = all.find(c=>{ const w=where[c.id]; return (w===undefined || (ueG && w===ueG.g.k)) && !(isMajor && c.bucket!=="auto" && c.bucket)
+                      && match(G.g.pool,c) && match(ch.any,c) && !capHit(G,c) && (!out || (+c.units||0)===(+out.units||0)); });
+        if(!inn) break;
+        if(out){
+          G.items.splice(G.items.indexOf(out),1);
+          if(ueG){ ueG.items.push(out); where[out.id]=ueG.g.k; } else delete where[out.id];
+        } else if(U(G.items)+(+inn.units||0) > G.g.units) break;
+        if(ueG && where[inn.id]===ueG.g.k) ueG.items.splice(ueG.items.indexOf(inn),1);
+        G.items.push(inn); where[inn.id]=G.g.k;
+      }
+    });
+  });
+  gs.forEach(G=>{
+    G.pl=U(G.items); G.dn=U(G.items.filter(c=>c.done));
+    G.plC=Math.min(G.pl,G.g.units); G.dnC=Math.min(G.dn,G.g.units);
+    G.slots.forEach(s=>{ s.full=slotFull(s); s.doneFull = s.r.units ? U(s.items.filter(c=>c.done))>=s.r.units : s.items.filter(c=>c.done).length>=(s.r.pick||1); });
+    G.rows = (G.g.checks||[]).flatMap(ch=>runCheck(ch,G,all));
+  });
+  const pl = gs.reduce((a,G)=>a+G.plC,0), dn = gs.reduce((a,G)=>a+G.dnC,0);
+  return {prog, gs, where, pl, dn};
+}
+function runCheck(ch,G,all){
+  const items=G.items;
+  if(ch.t==="minUnits"){
+    const m=items.filter(c=>match(ch.any,c)), p=U(m), d=U(m.filter(c=>c.done));
+    return [{label:`${ch.label} (${p}/${ch.n})`, pl:p>=ch.n, dn:d>=ch.n, gap:`${G.g.name}: ${ch.label}, ${ch.n-p} more units`}];
+  }
+  if(ch.t==="minCount"){
+    const m=items.filter(c=>match(ch.any,c)), p=m.length, d=m.filter(c=>c.done).length;
+    return [{label:`${ch.label} (${p}/${ch.n})`, pl:p>=ch.n, dn:d>=ch.n, gap:`${G.g.name}: ${ch.label}`}];
+  }
+  if(ch.t==="maxCount"){
+    const n=items.filter(c=>match(ch.any,c)).length, ok=n<=ch.n;
+    return [{label:`${ch.label} (${n})`, pl:ok, dn:ok, limit:true, gap:`${G.g.name}: ${ch.label} (currently ${n})`}];
+  }
+  if(ch.t==="ie"){
+    const alt = all.find(c=>c.code===ch.alt), m=items.filter(c=>match(ch.list,c) && c.code!==ch.alt);
+    const p=U(m), d=U(m.filter(c=>c.done));
+    return [{label: alt ? `${ch.alt} dissertation in plan` : `Industry Experience: ${p} units (${ch.min}–12)`,
+      pl: p>=ch.min || !!alt, dn: d>=ch.min || !!(alt&&alt.done),
+      gap:"Industry Experience: add CP3200 or CP3880 (or CP4101 if GPA ≥ 4.00)"}];
+  }
+  if(ch.t==="idcd"){
+    const id=items.filter(isID), cd=items.filter(isCD);
+    return [{label:`At least 2 ID courses (${id.length})`, pl:id.length>=2, dn:id.filter(c=>c.done).length>=2, gap:`Interdisciplinary: ${Math.max(0,2-id.length)} more ID course(s)`},
+            {label:"At most 1 CD course", pl:cd.length<=1, dn:cd.length<=1, limit:true, gap:"Only one Cross-disciplinary course can count"}];
+  }
+  if(ch.t==="focus"){
+    const codes = new Set(all.map(c=>c.code));
+    const doneCodes = new Set(all.filter(c=>c.done).map(c=>c.code));
+    const res = Object.entries(ch.areas).map(([name,list])=>{
+      const got=list.filter(k=>codes.has(k)), gd=list.filter(k=>doneCodes.has(k));
+      const ok = got.length>=3 && got.some(k=>levelOf(k)>=4), okd = gd.length>=3 && gd.some(k=>levelOf(k)>=4);
+      return {name, n:got.length, ok, okd, list};
+    }).sort((a,b)=>(b.ok-a.ok)||(b.n-a.n));
+    const any = res.some(r=>r.ok);
+    const shown = res.filter(r=>r.n>0).slice(0,3);
+    const rows = (shown.length?shown:res.slice(0,1)).map(r=>({label:`Focus: ${r.name} (${r.n}/3)`, pl:r.ok, dn:r.okd, soft:!r.ok && any}));
+    if(!any) rows[0].gap = "No focus area complete yet (3 primaries, one at level 4000)";
+    G.focus = res;
+    return rows;
+  }
+  return [];
+}
+function extrasEval(majorRes){
+  const sharedRank = c => (majorRes.where[c.id] && majorRes.where[c.id]!=="ue") ? 1 : 0;
+  const list = extras().map(k=>({k, prog:EXTRA[k], R:evaluate(EXTRA[k],false,sharedRank)}));
+  list.forEach(x=>{
+    const counted = x.R.gs.flatMap(G=>G.items);
+    let shared=0;
+    counted.forEach(c=>{
+      const inMajor = majorRes.where[c.id] && majorRes.where[c.id]!=="ue";
+      const inOther = list.some(y=>y!==x && y.R.where[c.id]);
+      if(inMajor||inOther) shared+=+c.units||0;
+    });
+    x.shared=shared; x.counted=U(counted); x.distinct=x.counted-shared;
+    x.blocked = (x.prog.not||[]).includes(state.major);
+  });
+  const triple = ordered().map(o=>o.c).filter(c=>{
+    const n = (majorRes.where[c.id] && majorRes.where[c.id]!=="ue" ? 1 : 0) + list.filter(x=>x.R.where[c.id]).length;
+    return n>=3;
+  });
+  list.triple = triple;
+  return list;
 }
 
-/* ---------- Second Major in Mathematics (AY2021/22 onwards) ---------- */
-const MA2_SHARE_CAP = 16, MA2_MIN = 40, MA2_DISTINCT = 24;
-function ma2Assign(){
-  const all = ordered().map(o=>o.c);
-  const used = new Set();
-  const pick = pred=>{ const c=all.find(x=>!used.has(x.id)&&pred(x)); if(c) used.add(c.id); return c||null; };
-  const inList = arr => c=>arr.includes(c.code);
-  const excl = c=> /^MA\d28[89]/.test(c.code);
-  const r = {};
-  r.disc = pick(inList(["CS1231S","CS1231","MA1100","MA1100T"]));
-  r.la2  = pick(inList(["MA2101","MA2101S"]));
-  r.an1  = pick(inList(["MA2108","MA2108S"]));
-  r.prob = pick(inList(["MA2116","MA2116T","MA2216","ST2131","ST2334"]));
-  r.calc = pick(inList(["MA2104","MA2311"])) || pick(c=>/^MA22\d\d/.test(c.code)&&!excl(c));
-  r.l1 = []; let u=0;
-  while(u<8){ const c=pick(c=>/^MA(15|20|22)\d\d/.test(c.code)&&!excl(c)); if(!c) break; r.l1.push(c); u+=+c.units||0; }
-  r.l3 = [];
-  for(let i=0;i<3;i++){ const c=pick(c=> c.code==="MA3XXX" || (/^MA[34]2\d\d/.test(c.code)&&!excl(c)) || ["ST3236","ST4238","ME3291","ME4291","PC3274A"].includes(c.code)); if(!c) break; r.l3.push(c); }
-  r.list = [r.disc,r.la2,r.an1,r.prob,r.calc,...r.l1,...r.l3].filter(Boolean);
-  return r;
-}
-function ma2Checks(where){
-  const r = ma2Assign();
-  const U = arr=> arr.reduce((s,c)=>s+(+c.units||0),0);
-  const pl = U(r.list), dn = U(r.list.filter(c=>c.done));
-  const shared = U(r.list.filter(c=>where[c.id]!=="ue"));
-  const l1u = U(r.l1), l1d = U(r.l1.filter(c=>c.done));
-  const ok = !!(r.disc&&r.la2&&r.an1&&r.prob&&r.calc) && l1u>=8 && r.l3.length>=3;
-  const okDone = ok && r.list.every(c=>c.done);
-  return {r,pl,dn,shared,distinct:pl-shared,l1u,l1d,ok,okDone};
+/* ---------- starter plan for a major ---------- */
+function starterPlan(mkey){
+  const prog = P.MAJORS[mkey]; const codes=[];
+  const ieInPool = prog.groups.some(g=>(g.checks||[]).some(ch=>ch.t==="ie"));
+  prog.groups.forEach(g=>{
+    (g.reqs||[]).forEach(r=>{
+      if(r.units){ codes.push(r.any.includes("CP3880") ? "CP3880" : quickCode(r.any)); return; }
+      for(let i=0;i<(r.pick||1);i++){ const q=quickCode(r.any); if(q) codes.push(q); }
+    });
+    if(g.k==="idcd") codes.push("HS","HS","HS");
+  });
+  if(ieInPool) codes.push("CP3880");
+  const seen=new Set(), list=[];
+  codes.filter(Boolean).forEach(k=>{ if(PH[k] || !seen.has(k)){ seen.add(k); list.push(PH[k]?ph(k):mk(k)); } });
+  const ie = list.filter(c=>c.code==="CP3880");
+  const rest = list.filter(c=>c.code!=="CP3880").map((c,i)=>({c,i,l:isPh(c)?2.5:level(c)})).sort((a,b)=>(a.l-b.l)||(a.i-b.i)).map(x=>x.c);
+  const terms={}, order=["Y1S1","Y1S2","Y2S1","Y2S2","Y3S1","Y4S1","Y4S2"];
+  let ti=0;
+  rest.forEach(c=>{
+    while(ti<order.length-1 && U(terms[order[ti]]||[])+(+c.units||4)>20) ti++;
+    (terms[order[ti]]=terms[order[ti]]||[]).push(c);
+  });
+  if(ie.length) terms.Y3S2 = ie;
+  return {v:2, major:mkey, second:null, minors:[], showST:{}, terms, starter:true};
 }
 
 /* ---------- rendering ---------- */
@@ -405,108 +488,141 @@ const pct = (a,b)=> Math.max(0,Math.min(100, b? a/b*100 : 0));
 const TICK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg>';
 const GRIP = '<svg viewBox="0 0 10 16" fill="currentColor"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg>';
 const status = (dn,pl)=> dn ? '<span class="pill done">Done</span>' : pl ? '<span class="pill plan">Planned</span>' : '<span class="pill miss">Missing</span>';
+const rowStatus = r => r.limit ? (r.pl ? '<span class="pill done">OK</span>' : '<span class="pill miss">Too many</span>') : r.soft ? '<span class="pill plan">Optional</span>' : status(r.dn,r.pl);
+let LAST = null;
+
+function progressHead(name, dn, pl, units, cls){
+  return `<div class="req ${cls||""}"><div class="req-h"><h2>${esc(name)}</h2><span class="n tnum"><b>${dn}</b> / ${units}${pl>dn?` · ${pl} pl`:""}</span></div>
+    <div class="mini"><div class="pl" style="width:${pct(pl,units)}%"></div><div class="dn" style="width:${pct(dn,units)}%"></div></div>`;
+}
+function chipFor(c){ return `<span class="chip ${c.done?"done":"plan"}" title="${esc(c.title||"")}">${esc(c.code)}</span>`; }
+function addChip(code,title){
+  const label = PH[code] ? code.replace(/XXX$/,"xxx") : code;
+  return `<button type="button" class="chip add" data-quick="${esc(code)}" title="${esc(title||("Add "+code+" to the next open term"))}">+ ${esc(label)}</button>`;
+}
+function groupBody(G, inPlan){
+  let chips="", rows="";
+  G.slots.forEach(s=>{
+    const multi = s.r.pick>1 || s.r.units;
+    if(!multi){
+      if(s.items.length) chips += chipFor(s.items[0]);
+      else { const q=quickCode(s.r.any); chips += q ? addChip(q, s.r.label) : `<span class="chip" title="${esc(s.r.label)}">${esc(s.r.label)}</span>`; }
+    } else {
+      const have = s.r.units ? `${s.u}/${s.r.units}u` : `${s.items.length}/${s.r.pick}`;
+      rows += `<div><span class="lbl">${esc(s.r.label)} (${have})${s.items.length?` · ${s.items.map(c=>esc(c.code)).join(", ")}`:""}</span>${status(s.doneFull,s.full)}</div>`;
+    }
+  });
+  G.rows.forEach(r=>{ rows += `<div><span class="lbl">${esc(r.label)}</span>${rowStatus(r)}</div>`; });
+  let html = "";
+  if(rows) html += `<div class="sub">${rows}</div>`;
+  if(chips) html += `<div class="chips">${chips}</div>`;
+  if(G.focus){
+    const best = G.focus.filter(f=>!f.ok).slice(0,1)[0] || G.focus[0];
+    const fa = G.focus.find(f=>f.ok) || best;
+    html += `<div class="eyebrow">${esc(fa.name)} primaries</div><div class="chips">${fa.list.filter(k=>k!=="CS2103").map(k=>{ const c=inPlan(k); return c?chipFor(c):addChip(k); }).join("")}</div>`;
+  }
+  const sug = (G.g.suggest||[]).filter(k=>!inPlan(k)).slice(0,6);
+  if(sug.length) html += `<div class="eyebrow">Ideas</div><div class="chips">${sug.map(k=>addChip(k)).join("")}</div>`;
+  if(G.g.hint) html += `<div class="sub"><span class="lbl">${esc(G.g.hint)}</span></div>`;
+  return html;
+}
 
 function render(){
-  const {used,where} = allocate();
-  const bd = bdChecks(), idc = idcdChecks();
-  const inPlan = code => ordered().map(o=>o.c).find(c=>c.code===code||FOUND_ALT[c.code]===code);
+  const M = major();
+  const R = evaluate(M, true);
+  const X = extrasEval(R);
+  LAST = {R, X};
+  const all = ordered().map(o=>o.c);
+  const inPlan = code => all.find(c=>c.code===code);
+  const TOTAL = M.units;
+
+  /* header + pickers */
+  $("#deg-line").textContent = `${M.degree} · ${M.cohort} · ${TOTAL} units`;
+  $("#maj-sel").value = state.major;
+  $("#sm-sel").value = state.second||"";
+  [0,1].forEach(i=>{ $("#mn-sel"+i).value = (state.minors||[])[i]||""; });
+  document.querySelectorAll("#sm-sel option, .mn-sel option").forEach(o=>{
+    const p = EXTRA[o.value]; o.disabled = !!(p && (p.not||[]).includes(state.major));
+  });
 
   /* summary */
-  let dn=0, pl=0;
-  BUCKETS.forEach(b=>{ dn+=Math.min(used[b.k].dn,b.cap); pl+=Math.min(used[b.k].pl,b.cap); });
-  const raw = ordered().reduce((s,o)=>s+(+o.c.units||0),0);
-  const ma = state.second==="math" ? ma2Checks(where) : null;
-  $("#s-done").textContent = dn;
-  $("#s-sub").textContent = `of ${TOTAL} · ${pl} planned (${Math.max(0,TOTAL-pl)} still unplanned)` + (raw>pl ? ` · ${raw-pl} extra units beyond the degree` : "");
-  $("#s-ma2").textContent = ma ? `Math second major: ${ma.dn} / ${MA2_MIN} done, ${ma.pl} planned` : "";
-  $("#sm-sel").value = state.second||"";
-  $("#s-dn").style.width = pct(dn,TOTAL)+"%";
-  $("#s-pl").style.width = pct(pl,TOTAL)+"%";
+  const raw = U(all);
+  $("#s-done").textContent = R.dn;
+  $("#s-sub").textContent = `of ${TOTAL} · ${R.pl} planned (${Math.max(0,TOTAL-R.pl)} still unplanned)` + (raw>R.pl ? ` · ${raw-R.pl} extra units beyond the degree` : "");
+  $("#s-dn").style.width = pct(R.dn,TOTAL)+"%";
+  $("#s-pl").style.width = pct(R.pl,TOTAL)+"%";
+  $("#s-ma2").textContent = X.map(x=>`${x.prog.kind==="minor"?"Minor":"Second major"} in ${x.prog.name}: ${x.R.dn}/${x.prog.units} done`).join(" · ");
 
   /* projected finish */
-  const run = Object.fromEntries(BUCKETS.map(b=>[b.k,0]));
-  let finish=null;
+  const run = {}; let finish=null;
   for(const t of TERMS){
-    (state.terms[t.id]||[]).forEach(c=>{ run[where[c.id]] += +c.units||0; });
-    const tot = BUCKETS.reduce((s,b)=>s+Math.min(run[b.k],b.cap),0);
+    (state.terms[t.id]||[]).forEach(c=>{ const k=R.where[c.id]; run[k]=(run[k]||0)+(+c.units||0); });
+    const tot = R.gs.reduce((s,G)=>s+Math.min(run[G.g.k]||0,G.g.units),0);
     if(tot>=TOTAL){ finish=t; break; }
   }
-  $("#s-finish").textContent = finish ? `Plan reaches 160 units in Year ${finish.y} ${finish.label}` : "";
+  $("#s-finish").textContent = finish ? `Plan reaches ${TOTAL} units in Year ${finish.y} ${finish.label}` : "";
 
   /* verdict */
   const gaps=[];
-  BUCKETS.forEach(b=>{ const left=b.cap-used[b.k].pl; if(left>0) gaps.push(`${b.name}: ${left} more units to plan`); });
-  if(!bd.focus.some(f=>f.plan.ok)) gaps.push("No focus area complete yet (3 primaries, one at level 4000)");
-  if(bd.l4.pl<12) gaps.push(`Level-4000 CS: ${12-bd.l4.pl} more units`);
-  if(!bd.ie.okPl) gaps.push("Industry Experience: add CP3200 or CP3880 (or CP4101 if GPA ≥ 4.00)");
-  if(bd.ie.pl>12) gaps.push("Industry Experience over 12 units; extra counts as UE");
-  if(idc.idPl<2) gaps.push(`Interdisciplinary: need ${2-idc.idPl} more ID course(s)`);
-  if(idc.cdPl>1) gaps.push("Only one Cross-disciplinary course can count");
-  if(ma){
-    const r=ma.r, miss=[];
-    if(!r.disc) miss.push("CS1231S/MA1100"); if(!r.la2) miss.push("MA2101"); if(!r.an1) miss.push("MA2108");
-    if(!r.calc) miss.push("MA2104/MA2311"); if(!r.prob) miss.push("ST2334/MA2116");
-    if(ma.l1u<8) miss.push(`${8-ma.l1u} units of MA15xx/20xx/22xx`);
-    if(r.l3.length<3) miss.push(`${3-r.l3.length} level-3000 math course(s)`);
-    if(miss.length) gaps.push("Math second major: add "+miss.join(", "));
-    if(ma.shared>MA2_SHARE_CAP) gaps.push(`Math second major shares ${ma.shared} units with your CS degree (max ${MA2_SHARE_CAP})`);
-    else if(ma.ok && ma.distinct<MA2_DISTINCT) gaps.push(`Math second major needs ${MA2_DISTINCT-ma.distinct} more distinct units`);
-  }
+  let allDone = R.dn>=TOTAL;
+  R.gs.forEach(G=>{
+    G.slots.forEach(s=>{ if(!s.full) gaps.push(`${G.g.pillar?"Pillar":G.g.name}: ${s.r.label}`); if(!s.doneFull) allDone=false; });
+    G.rows.forEach(r=>{ if(!r.pl && r.gap) gaps.push(r.gap); if(!r.dn && !r.soft) allDone=false; });
+  });
+  R.gs.forEach(G=>{ const left=G.g.units-G.pl; if(left>0 && G.slots.every(s=>s.full)) gaps.push(`${G.g.name}: ${left} more units to plan`); });
+  X.forEach(x=>{
+    const nm = `${x.prog.kind==="minor"?"Minor":"2nd major"} (${x.prog.name})`;
+    if(x.blocked) gaps.push(`${nm} is not open to ${M.name} students`);
+    x.R.gs.forEach(G=>{
+      G.slots.forEach(s=>{ if(!s.full) gaps.push(`${nm}: ${s.r.label}`); if(!s.doneFull) allDone=false; });
+      G.rows.forEach(r=>{ if(!r.pl) gaps.push(`${nm}: ${r.label}`); if(!r.dn) allDone=false; });
+      const left=G.g.units-G.pl; if(left>0 && G.slots.every(s=>s.full)) gaps.push(`${nm}: ${left} more units in ${G.g.name}`);
+    });
+    if(x.shared>x.prog.share) gaps.push(`${nm} shares ${x.shared} units with other requirements (max ${x.prog.share})`);
+    if(x.R.dn<x.prog.units) allDone=false;
+  });
+  if(X.triple && X.triple.length) gaps.push(`Counted three times (not allowed): ${X.triple.map(c=>c.code).join(", ")}. Each course can count toward at most two programmes`);
   const v=$("#verdict");
   if(!gaps.length){
-    const allDone = dn>=TOTAL && bd.focus.some(f=>f.done.ok) && bd.l4.dn>=12 && bd.ie.okDn && idc.idDn>=2 && (!ma || ma.okDone);
     v.className="verdict ok";
-    v.innerHTML = `<div class="eyebrow">Graduation check</div><h3>${allDone?"All requirements completed":"Your plan meets every requirement"}</h3><div style="font-size:.86rem">${allDone?"Time to apply for graduation.":`${TOTAL-dn} units left to complete${finish?`, finishing Year ${finish.y} ${finish.label}`:""}.`}</div>`;
+    v.innerHTML = `<div class="eyebrow">Graduation check</div><h3>${allDone?"All requirements completed":"Your plan meets every requirement"}</h3><div style="font-size:.86rem">${allDone?"Time to apply for graduation.":`${TOTAL-R.dn} units left to complete${finish?`, finishing Year ${finish.y} ${finish.label}`:""}.`}</div>`;
   } else {
     v.className="verdict warn";
     v.innerHTML = `<div class="eyebrow">Graduation check</div><h3>${gaps.length} gap${gaps.length>1?"s":""} in your plan</h3><ul>${gaps.slice(0,6).map(g=>`<li>${esc(g)}</li>`).join("")}${gaps.length>6?`<li>…and ${gaps.length-6} more</li>`:""}</ul>`;
   }
 
   /* rail */
-  const chip = (code)=>{ const c=inPlan(code); return c ? `<span class="chip ${c.done?"done":"plan"}">${code}</span>` : `<button type="button" class="chip add" data-quick="${code}" title="Add ${code} to the next open term">+ ${code}</button>`; };
-  const card = (b, extra)=>{
-    const u=used[b.k];
-    return `<div class="req"><div class="req-h"><h2>${esc(b.name)}</h2><span class="n tnum"><b>${Math.min(u.dn,b.cap)}</b> / ${b.cap}${u.pl>u.dn?` · ${Math.min(u.pl,b.cap)} pl`:""}</span></div>
-      <div class="mini"><div class="pl" style="width:${pct(u.pl,b.cap)}%"></div><div class="dn" style="width:${pct(u.dn,b.cap)}%"></div></div>${extra||""}</div>`;
-  };
-  const pillars = ["dl","ce","cc","dat","ss","ceng"].map(k=>BK[k]);
-  const pu = pillars.reduce((a,b)=>({dn:a.dn+Math.min(used[b.k].dn,4),pl:a.pl+Math.min(used[b.k].pl,4)}),{dn:0,pl:0});
-  let html = `<div class="req"><div class="req-h"><h2>University Pillars</h2><span class="n tnum"><b>${pu.dn}</b> / 24</span></div>
-    <div class="mini"><div class="pl" style="width:${pct(pu.pl,24)}%"></div><div class="dn" style="width:${pct(pu.dn,24)}%"></div></div>
-    <div class="sub">${pillars.map(b=>`<div><span class="lbl">${esc(b.name)}</span>${status(used[b.k].dn>=4,used[b.k].pl>=4)}</div>`).join("")}</div></div>`;
-  html += card(BK.eth, `<div class="chips">${chip("IS1108")}</div>`);
-  html += card(BK.idcd, `<div class="sub"><div><span class="lbl">At least 2 ID courses (${idc.idPl} planned)</span>${status(idc.idDn>=2,idc.idPl>=2)}</div><div><span class="lbl">At most 1 CD course</span>${idc.cdPl<=1?'<span class="pill done">OK</span>':'<span class="pill miss">Too many</span>'}</div></div>`);
-  html += card(BK.found, `<div class="chips">${FOUND.map(chip).join("")}</div>`);
-  html += card(BK.math, `<div class="chips">${MATH.map(chip).join("")}</div>`);
-  const ieTxt = bd.ie.diss ? "CP4101 dissertation in plan" : `${bd.ie.pl} units (6–12)`;
-  html += card(BK.bd, `<div class="sub">
-      ${bd.focus.map(f=>`<div><span class="lbl">Focus: ${esc(f.name)} (${f.plan.got.length}/3)</span>${status(f.done.ok,f.plan.ok)}</div>`).join("")}
-      <div><span class="lbl">Level-4000+ units (${bd.l4.pl}/12)</span>${status(bd.l4.dn>=12,bd.l4.pl>=12)}</div>
-      <div><span class="lbl">Industry Experience: ${ieTxt}</span>${status(bd.ie.okDn,bd.ie.okPl)}</div></div>
-    ${Object.entries(FOCUS).map(([n,codes])=>`<div class="eyebrow">${esc(n)} primaries</div><div class="chips">${codes.map(chip).join("")}</div>`).join("")}
-    <div class="eyebrow">Industry Experience</div><div class="chips">${["CP3200","CP3880","CP4101"].map(chip).join("")}</div>`);
-  html += card(BK.ue, `<div class="sub"><div><span class="lbl">Any course, plus overflow from full buckets</span></div></div>`);
-  if(ma){
-    const r=ma.r, st=c=>status(c&&c.done, !!c);
-    const nm=c=> c?` · ${esc(c.code)}`:"";
-    const l3d=r.l3.filter(c=>c.done).length;
-    html += `<div class="req ma2"><div class="req-h"><h2>Second Major · Mathematics</h2><span class="n tnum"><b>${ma.dn}</b> / ${MA2_MIN}${ma.pl>ma.dn?` · ${ma.pl} pl`:""}</span></div>
-      <div class="mini"><div class="pl" style="width:${pct(ma.pl,MA2_MIN)}%"></div><div class="dn" style="width:${pct(ma.dn,MA2_MIN)}%"></div></div>
-      <div class="sub">
-        <div><span class="lbl">Discrete maths${nm(r.disc)}</span>${st(r.disc)}</div>
-        <div><span class="lbl">8 units MA15xx/20xx/22xx (${ma.l1u}/8)</span>${status(ma.l1d>=8,ma.l1u>=8)}</div>
-        <div><span class="lbl">Linear Algebra II${nm(r.la2)}</span>${st(r.la2)}</div>
-        <div><span class="lbl">Multivariable calculus${nm(r.calc)}</span>${st(r.calc)}</div>
-        <div><span class="lbl">Mathematical Analysis I${nm(r.an1)}</span>${st(r.an1)}</div>
-        <div><span class="lbl">Probability${nm(r.prob)}</span>${st(r.prob)}</div>
-        <div><span class="lbl">3 courses MA32xx/MA42xx (${r.l3.length}/3)</span>${status(l3d>=3,r.l3.length>=3)}</div>
-        <div><span class="lbl">Shared with CS degree (max ${MA2_SHARE_CAP})</span><span class="pill ${ma.shared>MA2_SHARE_CAP?"miss":"done"} tnum">${ma.shared}u</span></div>
-        <div><span class="lbl">Distinct units (need ${MA2_DISTINCT})</span><span class="pill ${ma.distinct>=MA2_DISTINCT?"done":"plan"} tnum">${ma.distinct}u</span></div>
-      </div>
-      <div class="chips">${["MA2101","MA2104","MA2108"].map(chip).join("")}<button type="button" class="chip add" data-quick="MA3XXX" title="Add a level-3000 math placeholder">+ MA3xxx</button></div>
-      <div class="sub"><span class="lbl">Courses that also count for CS (CS1231S, MA1521, MA1522, ST2334) use up the shared allowance. The rest sit in your UEs.</span></div></div>`;
+  const pil = R.gs.filter(G=>G.g.pillar);
+  let html = "";
+  if(pil.length){
+    const units=pil.reduce((a,G)=>a+G.g.units,0);
+    html += progressHead("University Pillars", pil.reduce((a,G)=>a+G.dnC,0), pil.reduce((a,G)=>a+G.plC,0), units)
+      + `<div class="sub">${pil.map(G=>{ const s=G.slots[0], c=s.items[0];
+          return `<div><span class="lbl">${esc(G.g.name)}${c?` · ${esc(c.code)}`:""}</span>${c?status(s.doneFull,s.full):(()=>{const q=quickCode(s.r.any);return q?addChip(q,s.r.label):status(false,false);})()}</div>`; }).join("")}</div></div>`;
   }
+  R.gs.filter(G=>!G.g.pillar).forEach(G=>{
+    html += progressHead(G.g.name, G.dnC, G.plC, G.g.units) + groupBody(G, inPlan) + `</div>`;
+  });
+  X.forEach(x=>{
+    const label = `${x.prog.kind==="minor"?"Minor":"Second Major"} · ${x.prog.name}`;
+    html += progressHead(label, x.R.dn, x.R.pl, x.prog.units, "extra");
+    if(x.blocked) html += `<div class="sub"><span class="lbl warn-text">Not open to ${esc(M.name)} students.</span></div>`;
+    x.R.gs.forEach(G=>{ html += `<div class="eyebrow">${esc(G.g.name)} · ${G.plC}/${G.g.units}</div>` + groupBody(G, inPlan); });
+    const need = x.prog.units - x.prog.share;
+    html += `<div class="sub">
+        <div><span class="lbl">Shared with other requirements (max ${x.prog.share})</span><span class="pill ${x.shared>x.prog.share?"miss":"done"} tnum">${x.shared}u</span></div>
+        <div><span class="lbl">Distinct units (need ${need})</span><span class="pill ${x.distinct>=need?"done":"plan"} tnum">${x.distinct}u</span></div>
+        <div><span class="lbl">${esc(x.prog.cohort)}${x.prog.note?`. ${esc(x.prog.note)}`:""}</span></div></div></div>`;
+  });
   $("#rail").innerHTML = html;
+
+  /* sources */
+  const srcs = [M, ...X.map(x=>x.prog)].flatMap(p=>p.sources||[]);
+  $("#sources").innerHTML = "Requirement sources: " + srcs.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)}</a>`).join(" · ");
+
+  /* course badges */
+  const gk = Object.fromEntries(M.groups.map(g=>[g.k,g]));
+  const extraBadge = id => X.filter(x=>x.R.where[id]).map(x=>x.prog.kind==="minor"?"Min":"2M");
 
   /* years */
   let yh="";
@@ -522,12 +638,12 @@ function render(){
       yh += `<div class="term ${t.st?"st":""}" data-term="${t.id}"><div class="term-h"><h3>${t.label}</h3><span class="u tnum ${tu>24?"heavy":""}" title="${tu>24?"Heavy workload":""}">${tdn&&tdn<tu?`${tdn}/`:""}${tu} units</span></div><div class="list">`;
       if(!list.length) yh += `<div class="empty">No courses yet</div>`;
       list.forEach(c=>{
-        const b = where[c.id];
+        const b = R.where[c.id];
         yh += `<div class="course ${c.done?"is-done":""} ${isPh(c)?"ph":""}" data-id="${c.id}">
           <span class="grip" data-drag="${c.id}" title="Drag to move" aria-hidden="true">${GRIP}</span>
           <button type="button" class="tick" data-tog="${c.id}" aria-pressed="${c.done}" aria-label="Mark ${esc(c.code)} ${c.done?"not done":"done"}">${c.done?TICK:""}</button>
           <button type="button" class="c-body" data-edit="${c.id}" aria-label="Edit ${esc(c.code)}"><span class="c-code">${esc(c.code)}</span><span class="c-title">${esc(c.title||"Tap to add a title")}</span>${(()=>{const w=issues(c,t.id);return w.length?`<span class="c-warn" title="${esc(w.join(". "))}">⚠ ${esc(w[0])}</span>`:"";})()}</button>
-          <span class="c-side"><span class="c-u tnum">${c.units}u</span><span class="bk ${b==="ue"?"ue":""}" title="Counts toward ${esc(BK[b].name)}">${SHORT[b]}</span></span></div>`;
+          <span class="c-side"><span class="c-u tnum">${c.units}u</span>${b&&gk[b]?`<span class="bk ${b==="ue"?"ue":""}" title="Counts toward ${esc(gk[b].name)}">${esc(gk[b].short||gk[b].name)}</span>`:""}${extraBadge(c.id).map(t=>`<span class="bk ex" title="Also counts toward your ${t==="2M"?"second major":"minor"}">${t}</span>`).join("")}</span></div>`;
       });
       yh += `</div><form class="adder" data-add="${t.id}"><input id="add-${t.id}" list="catalog" placeholder="Add course code" autocomplete="off" aria-label="Add course to Year ${y} ${t.label}"><button type="submit" aria-label="Add">+</button></form></div>`;
     });
@@ -549,7 +665,7 @@ function addCourse(term, raw, open){
   const nm = NM.byCode[code];
   if(nm && !c.title) c.title = nm.title;
   (state.terms[term] = state.terms[term]||[]).push(c);
-  state.sample=false; save(); render();
+  state.starter=false; save(); render();
   if(nm){
     ensureDetail(code).then(d=>{
       if(d){ if(!CATMAP[code]) c.units = d.mc; c.title = c.title || d.title; save(); }
@@ -694,7 +810,7 @@ function editDialog(id, isNew){
     <div class="row2"><label>Code<input id="e-code" value="${esc(c.code)}"></label><label>Units<input id="e-units" type="number" min="0" max="40" step="1" value="${esc(c.units)}"></label></div>
     <label>Title<input id="e-title" value="${esc(c.title)}" placeholder="Copy from NUSMods"></label>
     <div class="row2">
-      <label>Counts toward<select id="e-bucket"><option value="auto">Automatic (${esc(BK[home(Object.assign({},c,{bucket:"auto"}))].name)})</option>${BUCKETS.map(b=>`<option value="${b.k}" ${c.bucket===b.k?"selected":""}>${esc(b.name)}</option>`).join("")}</select></label>
+      <label>Counts toward<select id="e-bucket"><option value="auto">Automatic${c.bucket==="auto"&&LAST&&LAST.R.where[c.id]?` (now: ${esc(major().groups.find(g=>g.k===LAST.R.where[c.id]).name)})`:""}</option>${major().groups.map(g=>`<option value="${g.k}" ${c.bucket===g.k?"selected":""}>${esc(g.name)}</option>`).join("")}</select></label>
       <label>Course type<select id="e-tag"><option value="">Normal</option><option value="ID" ${c.tag==="ID"?"selected":""}>Interdisciplinary (ID)</option><option value="CD" ${c.tag==="CD"?"selected":""}>Cross-disciplinary (CD)</option><option value="IE" ${c.tag==="IE"?"selected":""}>Industry Experience</option></select></label>
     </div>
     <div class="row2">
@@ -714,13 +830,31 @@ function editDialog(id, isNew){
   };
 }
 
-$("#sm-sel").onchange=e=>{ state.second=e.target.value||null; save(); render(); if(state.second) toast("Math second major added to the requirements panel"); };
+function fillPickers(){
+  const opt = (k,p)=>`<option value="${k}">${esc(p.name)}</option>`;
+  $("#maj-sel").innerHTML = Object.entries(P.MAJORS).map(([k,p])=>opt(k,p)).join("");
+  $("#sm-sel").innerHTML = `<option value="">None</option>` + Object.entries(P.SECOND).map(([k,p])=>opt(k,p)).join("");
+  document.querySelectorAll(".mn-sel").forEach(s=>{ s.innerHTML = `<option value="">None</option>` + Object.entries(P.MINORS).map(([k,p])=>opt(k,p)).join(""); });
+}
+$("#maj-sel").onchange=e=>{
+  state.major=e.target.value;
+  const bad=[state.second,...(state.minors||[])].filter(k=>k && (EXTRA[k].not||[]).includes(state.major));
+  if(bad.length){ state.second = bad.includes(state.second)?null:state.second; state.minors=(state.minors||[]).filter(k=>!bad.includes(k)); }
+  save(); render();
+  toast(`Requirements switched to ${major().name}${bad.length?". Removed a programme not open to this major":""}`);
+};
+$("#sm-sel").onchange=e=>{ state.second=e.target.value||null; save(); render(); if(state.second) toast(`Second major in ${EXTRA[state.second].name} added to the requirements panel`); };
+document.querySelectorAll(".mn-sel").forEach((sel,i)=>{ sel.onchange=e=>{
+  const m=(state.minors||[]).slice(); m[i]=e.target.value||null;
+  state.minors=m.filter((k,j,a)=>k && a.indexOf(k)===j); save(); render();
+  if(e.target.value) toast(`Minor in ${EXTRA[e.target.value].name} added to the requirements panel`);
+}; });
 $("#btn-reset").onclick=()=>{
-  openDlg(`<h2>Reset the planner</h2><p style="margin:0;color:var(--muted)">This replaces everything on the page. Export first if you want a copy.</p>
-    <div class="dlg-f"><button type="button" class="btn" id="r-cancel">Cancel</button><div><button type="button" class="btn" id="r-clear">Start empty</button><button type="button" class="btn primary" id="r-sample">Load sample SWE + AI plan</button></div></div>`);
+  openDlg(`<h2>Reset the planner</h2><p style="margin:0;color:var(--muted)">This replaces everything on the page. Export first if you want a copy. The starter plan places every required course for ${esc(major().name)} across 4 years; you add your electives.</p>
+    <div class="dlg-f"><button type="button" class="btn" id="r-cancel">Cancel</button><div><button type="button" class="btn" id="r-clear">Start empty</button><button type="button" class="btn primary" id="r-sample">Load starter plan</button></div></div>`);
   $("#r-cancel").onclick=closeDlg;
-  $("#r-clear").onclick=()=>{ state={v:1,showST:{},terms:{}}; save(); render(); closeDlg(); toast("Planner cleared"); };
-  $("#r-sample").onclick=()=>{ state=samplePlan(); save(); render(); closeDlg(); toast("Sample plan loaded"); };
+  $("#r-clear").onclick=()=>{ state={v:2,major:state.major,second:state.second,minors:state.minors||[],showST:{},terms:{}}; save(); render(); closeDlg(); toast("Planner cleared"); };
+  $("#r-sample").onclick=()=>{ const keep={second:state.second,minors:state.minors}; state=Object.assign(starterPlan(state.major),keep); save(); render(); closeDlg(); toast("Starter plan loaded"); };
 };
 $("#btn-io").onclick=()=>{
   openDlg(`<h2>Export / Import</h2><label>Your plan as text. Copy it to back up, or paste a saved plan and press Import.<textarea id="io-t">${esc(JSON.stringify(state))}</textarea></label>
@@ -740,6 +874,10 @@ function toast(msg){ let el=$("#toast"); if(!el){ el=document.createElement("div
 const LS="nus-cs-planner-v1";
 function normalize(s){
   s.showST=s.showST||{}; s.terms=s.terms||{};
+  if(!P.MAJORS[s.major]) s.major="cs";
+  if(s.second==="math") s.second="ma2";
+  if(s.second && !P.SECOND[s.second]) s.second=null;
+  s.minors=(s.minors||[]).filter(k=>P.MINORS[k]);
   for(const t in s.terms){ if(!TERM_IDX.hasOwnProperty(t)) delete s.terms[t]; else s.terms[t]=s.terms[t].filter(Boolean).map(c=>Object.assign({id:uid(),code:"",title:"",units:4,done:false,bucket:"auto",tag:""},c)); }
   return s;
 }
@@ -835,10 +973,11 @@ function issues(c, termId){
 
 (function boot(){
   try{ const raw=localStorage.getItem(LS); if(raw) state=normalize(JSON.parse(raw)); }catch(_){}
-  if(!state) state=samplePlan();
+  if(!state) state=starterPlan("cs");
+  fillPickers();
   const dl=$("#catalog"); dl.innerHTML = CAT.map(c=>`<option value="${c[0]}">${esc(c[1])}</option>`).join("") + Object.keys(PH).map(k=>`<option value="${k}">${esc(PH[k].title)}</option>`).join("");
   render();
-  if(state.sample) toast("Sample plan loaded. Edit it to match your own courses.");
+  if(state.starter) toast("Starter plan loaded. Pick your major above, then edit it to match your courses.");
   loadList();
 })();
 })();
