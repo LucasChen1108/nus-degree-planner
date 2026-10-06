@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Plan your 4-year NUS School of Computing degree (CS, AI, Business Analytics, BAIS, InfoSec) with second majors and minors: track every requirement, with live course data from NUSMods.">
+<meta name="description" content="Plan your 4-year NUS degree across Computing, Science, Arts & Social Sciences, Engineering and Business, with second majors, minors and residential colleges. Live course data from NUSMods.">
 <meta name="theme-color" content="#e0730f">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231d3f73'/%3E%3Crect x='6' y='8' width='20' height='3' rx='1.5' fill='%23fff'/%3E%3Crect x='6' y='14.5' width='14' height='3' rx='1.5' fill='%23e0730f'/%3E%3Crect x='6' y='21' width='9' height='3' rx='1.5' fill='%23fff'/%3E%3C/svg%3E">
-<title>NUS SoC Degree Planner</title>
+<title>NUS Degree Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
@@ -59,7 +59,9 @@ button{cursor:pointer}
 .top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
 .top p{margin:4px 0 0;color:var(--muted);max-width:62ch}
 .tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.progbar{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.progbar{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;grid-template-columns:1.4fr repeat(4,minmax(0,1fr));gap:12px}
+.prog-note{grid-column:1/-1;margin:0;font-size:.8rem;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:8px 10px}
+.linkbtn{background:none;border:0;padding:0;color:var(--navy);font-weight:600;text-decoration:underline;cursor:pointer}
 .progbar label{display:flex;flex-direction:column;gap:4px;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;min-width:0}
 .progbar select{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 9px;color:var(--ink);font-size:.9rem;text-transform:none;letter-spacing:0;font-weight:500;width:100%}
 .progbar label.major select{border-color:var(--accent)}
@@ -68,7 +70,7 @@ button{cursor:pointer}
 .warn-text{color:var(--bad);font-weight:600}
 .sources{font-size:.76rem;color:var(--muted)}
 .sources a{color:var(--navy)}
-@media (max-width:900px){.progbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1000px){.progbar{grid-template-columns:repeat(2,minmax(0,1fr))}.progbar label.major{grid-column:1/-1}}
 .sync{font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:6px}
 .sync i{width:8px;height:8px;border-radius:50%;background:var(--warn);display:inline-block}
 .sync.cloud i{background:var(--ok)}
@@ -182,7 +184,7 @@ body.is-dragging *{cursor:grabbing!important}
   <header class="top">
     <div>
       <div class="eyebrow" id="deg-line">B.Comp. (Computer Science) · 160 units</div>
-      <h1>NUS SoC Degree Planner</h1>
+      <h1>NUS Degree Planner</h1>
       <p>Tick a course when you've passed it. Type any NUS course code into any term to add it, and drag courses between semesters. Units count toward requirements automatically; overflow goes to Unrestricted Electives.</p>
     </div>
     <div class="tools">
@@ -197,6 +199,8 @@ body.is-dragging *{cursor:grabbing!important}
     <label for="sm-sel">Second major<select id="sm-sel"></select></label>
     <label for="mn-sel0">Minor<select id="mn-sel0" class="mn-sel"></select></label>
     <label for="mn-sel1">Second minor<select id="mn-sel1" class="mn-sel"></select></label>
+    <label for="rc-sel">Residential college<select id="rc-sel"></select></label>
+    <p class="prog-note" id="prog-note" hidden></p>
   </section>
 
   <section class="summary" aria-label="Progress summary">
@@ -216,6 +220,7 @@ body.is-dragging *{cursor:grabbing!important}
 
   <p class="note">Unofficial student-made tool. Not affiliated with or endorsed by NUS. Course data comes live from the <a href="https://nusmods.com" target="_blank" rel="noopener">NUSMods</a> API. Requirements follow each programme's official page for recent cohorts and change by intake year, so always confirm with your EduRec degree audit. Your plan is saved only in this browser. Use Export to back it up.</p>
   <p class="sources" id="sources"></p>
+  <p class="sources">Spotted a wrong requirement, or want your programme added in detail? <a href="https://github.com/lucaschen1108/nus-degree-planner/issues" target="_blank" rel="noopener">Report it on GitHub</a>.</p>
 </div>
 
 <datalist id="catalog"></datalist>
@@ -253,6 +258,10 @@ const CAT = [
  ["IFS4205","Information Security Capstone Project",8],["IS4010","Digital Transformation Leadership Programme",12],["CP3202","Internship II",6],["CP3107","Computing for Social Service Agencies I",6],["CP3110","Computing for Social Service Agencies II",6],
  ["ST1131","Introduction to Statistics and Statistical Computing",4],["ST2132","Mathematical Statistics",4],["ST3131","Regression Analysis",4],["QF1100","Introduction to Quantitative Finance",4],
  ["EC1101E","Introduction to Economic Analysis",4],["EC2101","Microeconomic Analysis I",4],["EC2102","Macroeconomic Analysis I",4],
+ ["MA1511","Engineering Calculus",2],["MA1512","Differential Equations for Engineering",2],["MA1513","Linear Algebra with Differential Equations",2],
+ ["CE2407A","Uncertainty Analysis for Engineers",2],["CE2407B","Numerical Methods for Engineers",2],["EG2401A","Engineering Professionalism",2],["EG3611A","Industrial Attachment",10],
+ ["BN4101","B.Eng. Dissertation",8],["ESE4501","Design Project",8],["ME4101A","Bachelor of Engineering Dissertation",8],["MA4198","Mathematics Capstone Project",4],
+ ["BSP1702","Legal Environment of Business",4],["BSP1703","Managerial Economics",4],["DAO1704","Decision Analytics using Spreadsheets",4],["RE1707","Real Estate Principles",4],["MNO2707","Business and Society",4],
  ["MA3201","Algebra II",4],["MA3210","Mathematical Analysis II",4],["MA3220","Ordinary Differential Equations",4],
  ["MA3236","Non-Linear Programming",4],["MA3238","Stochastic Processes I",4],["MA3252","Linear and Network Optimisation",4]
 ];
@@ -284,14 +293,53 @@ const PH = {
   CS4XXX:{title:"Level-4000 CS elective", q:"CS4", as:"CS4000"},
   MA3XXX:{title:"Level-3000+ math course (MA32xx / MA42xx)", q:"MA3", as:"MA3200"}
 };
-function ph(code,done){ const p=PH[code]; return mk(code,done,{title:p.title, tag:p.tag||"", bucket:p.bucket||"auto"}); }
+function phOf(code){
+  if(PH[code]) return PH[code];
+  const m = /^([A-Z]+\d*)(XX+)$/.exec(code||"");
+  return m ? (PH[code] = {title:`Any ${m[1]}${m[2].toLowerCase()} course`, as:m[1]+m[2].replace(/X/g,"0"), q:m[1]}) : null;
+}
+function ph(code,done){ const p=phOf(code); return mk(code,done,{title:p.title, tag:p.tag||"", bucket:p.bucket||"auto"}); }
 let state = null;
-const major = ()=> P.MAJORS[state.major] || P.MAJORS.cs;
+function baseMajor(){
+  if(state.major==="custom") return customProgramme();
+  return P.MAJORS[state.major] || P.MAJORS.cs;
+}
+function applyRC(prog, rc){
+  if(!rc || !P.RCS[rc]) return prog;
+  if(rc==="nusc"){
+    const cc = prog.groups.filter(g=>g.cc);
+    if(!cc.length) return prog;
+    const units = cc.reduce((a,g)=>a+g.units,0);
+    return Object.assign({}, prog, {groups:[Object.assign({}, P.NUSC, {units}), ...prog.groups.filter(g=>!g.cc)]});
+  }
+  return Object.assign({}, prog, {groups:prog.groups.map(g=>{
+    const extra = g.rc && g.rc[rc];
+    if(!extra) return g;
+    return Object.assign({}, g, {rcOn:true, reqs:(g.reqs||[]).map(r=>Object.assign({}, r, {any:[...r.any, ...extra]})), pool:g.pool?[...g.pool, ...extra]:g.pool});
+  })});
+}
+const major = ()=> applyRC(baseMajor(), state.rc);
+/* custom programme: "Group name | units | patterns" per line */
+function parseCustom(text){
+  return (text||"").split(/\n/).map(l=>l.trim()).filter(Boolean).map((l,i)=>{
+    const [name,units,pat] = l.split("|").map(x=>(x||"").trim());
+    const any = (pat||"").split(/[,\s]+/).filter(Boolean).map(p=>p.toUpperCase().replace(/\*/g,"%"));
+    return {k:"g"+i, name:name||`Group ${i+1}`, short:(name||"Group").split(/\s+/)[0].slice(0,9), units:Math.max(0,parseInt(units,10)||0), pool:any.length?any:["!%"]};
+  }).filter(g=>g.units>0);
+}
+function customProgramme(){
+  const c = state.custom || {};
+  const groups = parseCustom(c.text);
+  const total = +c.units || 160, used = groups.reduce((a,g)=>a+g.units,0);
+  return {faculty:"Other", name:c.name||"Custom programme", degree:c.name||"Custom programme", cohort:"Your own requirements", units:Math.max(total,used), custom:true,
+    sources:[], groups:[...groups, ...(total>used?[UEgroup(total-used)]:[])]};
+}
+const UEgroup = units => ({k:"ue", name:"Unrestricted Electives", short:"UE", units, ue:true, hint:"Any course, plus overflow from full requirement groups."});
 const extras = ()=> [state.second, ...(state.minors||[])].filter(k=>k && EXTRA[k]);
 
 /* ---------- matching ---------- */
-const isPh = c => !!PH[c.code] || !/\d/.test(c.code);
-const codeOf = c => c.tag==="IE" ? "CP3200" : ((PH[c.code] && PH[c.code].as) || c.code);
+const isPh = c => !!phOf(c.code) || !/\d/.test(c.code);
+const codeOf = c => c.tag==="IE" ? "CP3200" : ((phOf(c.code) && phOf(c.code).as) || c.code);
 const levelOf = code => { const m = code.match(/^[A-Z]+(\d)/); return m?+m[1]:0; };
 const level = c => levelOf(codeOf(c));
 function isID(c){ return c.tag==="ID" || (!c.tag && /^HS[A-Z]?\d|^HS$/.test(c.code)); }
@@ -315,8 +363,11 @@ function match(any,c){
 }
 const concrete = p => p[0]!=="!" && p[0]!=="@" && !/[%\[]/.test(p) && !/x/.test(p);
 function quickCode(any){
-  const c = any.find(concrete); if(c) return c;
-  for(const p of any){ const m=p.match(/^(GE[CSNX])%$/); if(m) return m[1]; }
+  for(const p of any){
+    if(concrete(p)) return p;
+    const m=p.match(/^(GE[CSNX])%$/); if(m) return m[1];
+    if(/^[A-Z]+\d*xx+$/.test(p)){ const code=p.replace(/x/g,"X"); phOf(code); return code; }
+  }
   return null;
 }
 
@@ -456,6 +507,23 @@ function extrasEval(majorRes){
 }
 
 /* ---------- starter plan for a major ---------- */
+const unitsOf = code => (CATMAP[code] && CATMAP[code].units) || 4;
+function starterCodes(r){
+  const conc = r.any.filter(concrete);
+  let phc = null;
+  for(const p of r.any){ const m=p.match(/^(GE[CSNX])%$/); if(m){ phc=m[1]; break; } }
+  if(!phc) for(const p of r.any){ if(/^[A-Z]+\d*xx+$/.test(p)){ phc=p.replace(/x/g,"X"); phOf(phc); break; } }
+  if(r.units){
+    if(r.any.includes("CP3880")) return ["CP3880"];
+    const out=[]; let u=0, i=0;
+    while(u<r.units){ const code = i<conc.length ? conc[i++] : phc; if(!code) break; out.push(code); u+=unitsOf(code); }
+    return out;
+  }
+  const n = r.pick||1;
+  if(n===1) return [quickCode(r.any)].filter(Boolean);
+  if(phc) return Array(n).fill(phc);
+  return conc.slice(0,n);
+}
 const termSig = terms => JSON.stringify(Object.keys(terms||{}).sort().map(t=>[t,(terms[t]||[]).map(c=>[c.code,c.units,c.done,c.bucket,c.tag])]));
 const codeSig = terms => JSON.stringify(Object.keys(terms||{}).sort().map(t=>[t,(terms[t]||[]).map(c=>c.code)]));
 const isUntouchedStarter = () => {
@@ -470,18 +538,15 @@ function withStarter(mkey, keep){
   return Object.assign(p, keep||{});
 }
 function starterPlan(mkey){
-  const prog = P.MAJORS[mkey]; const codes=[];
+  const prog = applyRC(mkey==="custom" ? customProgramme() : (P.MAJORS[mkey]||P.MAJORS.cs), state && state.rc); const codes=[];
   const ieInPool = prog.groups.some(g=>(g.checks||[]).some(ch=>ch.t==="ie"));
   prog.groups.forEach(g=>{
-    (g.reqs||[]).forEach(r=>{
-      if(r.units){ codes.push(r.any.includes("CP3880") ? "CP3880" : quickCode(r.any)); return; }
-      for(let i=0;i<(r.pick||1);i++){ const q=quickCode(r.any); if(q) codes.push(q); }
-    });
+    (g.reqs||[]).forEach(r=>codes.push(...starterCodes(r)));
     if(g.k==="idcd") codes.push("HS","HS","HS");
   });
   if(ieInPool) codes.push("CP3880");
   const seen=new Set(), list=[];
-  codes.filter(Boolean).forEach(k=>{ if(PH[k] || !seen.has(k)){ seen.add(k); list.push(PH[k]?ph(k):mk(k)); } });
+  codes.filter(Boolean).forEach(k=>{ if(phOf(k) || !seen.has(k)){ seen.add(k); list.push(phOf(k)?ph(k):mk(k)); } });
   const ie = list.filter(c=>c.code==="CP3880");
   const rest = list.filter(c=>c.code!=="CP3880").map((c,i)=>({c,i,l:isPh(c)?2.5:level(c)})).sort((a,b)=>(a.l-b.l)||(a.i-b.i)).map(x=>x.c);
   const terms={}, order=["Y1S1","Y1S2","Y2S1","Y2S2","Y3S1","Y4S1","Y4S2"];
@@ -510,7 +575,7 @@ function progressHead(name, dn, pl, units, cls){
 }
 function chipFor(c){ return `<span class="chip ${c.done?"done":"plan"}" title="${esc(c.title||"")}">${esc(c.code)}</span>`; }
 function addChip(code,title){
-  const label = PH[code] ? code.replace(/XXX$/,"xxx") : code;
+  const label = phOf(code) ? code.replace(/(X+)$/,m=>m.toLowerCase()) : code;
   return `<button type="button" class="chip add" data-quick="${esc(code)}" title="${esc(title||("Add "+code+" to the next open term"))}">+ ${esc(label)}</button>`;
 }
 function groupBody(G, inPlan){
@@ -550,7 +615,11 @@ function render(){
   const TOTAL = M.units;
 
   /* header + pickers */
-  $("#deg-line").textContent = `${M.degree} · ${M.cohort} · ${TOTAL} units`;
+  $("#deg-line").textContent = `${M.degree} · ${M.cohort} · ${TOTAL} units${state.rc?` · ${P.RCS[state.rc].name}`:""}`;
+  $("#rc-sel").value = state.rc||"";
+  $("#prog-note").innerHTML = M.custom ? `Custom programme. <button type="button" class="linkbtn" id="edit-custom">Edit requirements</button>`
+    : M.simplified ? `This major is simplified: its elective rules are matched by course prefix. Check your department's page for the exact course lists.` : "";
+  $("#prog-note").hidden = !(M.custom || M.simplified);
   $("#maj-sel").value = state.major;
   $("#sm-sel").value = state.second||"";
   [0,1].forEach(i=>{ $("#mn-sel"+i).value = (state.minors||[])[i]||""; });
@@ -579,7 +648,7 @@ function render(){
   const gaps=[];
   let allDone = R.dn>=TOTAL;
   R.gs.forEach(G=>{
-    G.slots.forEach(s=>{ if(!s.full) gaps.push(`${G.g.pillar?"Pillar":G.g.name}: ${s.r.label}`); if(!s.doneFull) allDone=false; });
+    G.slots.forEach(s=>{ if(!s.full) gaps.push(`${G.g.pillar?(G.g.short==="Pillar"?"Pillar":"Common Curriculum"):G.g.name}: ${s.r.label}`); if(!s.doneFull) allDone=false; });
     G.rows.forEach(r=>{ if(!r.pl && r.gap) gaps.push(r.gap); if(!r.dn && !r.soft) allDone=false; });
   });
   R.gs.forEach(G=>{ const left=G.g.units-G.pl; if(left>0 && G.slots.every(s=>s.full)) gaps.push(`${G.g.name}: ${left} more units to plan`); });
@@ -609,7 +678,7 @@ function render(){
   let html = "";
   if(pil.length){
     const units=pil.reduce((a,G)=>a+G.g.units,0);
-    html += progressHead("University Pillars", pil.reduce((a,G)=>a+G.dnC,0), pil.reduce((a,G)=>a+G.plC,0), units)
+    html += progressHead(pil.length>6 ? "Common Curriculum" : "University Pillars", pil.reduce((a,G)=>a+G.dnC,0), pil.reduce((a,G)=>a+G.plC,0), units)
       + `<div class="sub">${pil.map(G=>{ const s=G.slots[0], c=s.items[0];
           return `<div><span class="lbl">${esc(G.g.name)}${c?` · ${esc(c.code)}`:""}</span>${c?status(s.doneFull,s.full):(()=>{const q=quickCode(s.r.any);return q?addChip(q,s.r.label):status(false,false);})()}</div>`; }).join("")}</div></div>`;
   }
@@ -630,7 +699,7 @@ function render(){
   $("#rail").innerHTML = html;
 
   /* sources */
-  const srcs = [M, ...X.map(x=>x.prog)].flatMap(p=>p.sources||[]);
+  const srcs = [M, ...X.map(x=>x.prog)].flatMap(p=>p.sources||[]).concat(state.rc && P.RCS[state.rc].source ? [P.RCS[state.rc].source] : []);
   $("#sources").innerHTML = "Requirement sources: " + srcs.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)}</a>`).join(" · ");
 
   /* course badges */
@@ -670,11 +739,11 @@ function find(id){ for(const t in state.terms){ const i=(state.terms[t]||[]).fin
 function addCourse(term, raw, open){
   const code = raw.trim().toUpperCase().split(/\s+/)[0];
   if(!code) return;
-  if(/\d/.test(code) && !PH[code]){
+  if(/\d/.test(code) && !phOf(code)){
     const dup = ordered().find(o=>o.c.code===code);
     if(dup){ toast(`${code} is already in ${termName(dup.t)}`); return; }
   }
-  const c = PH[code] ? ph(code) : mk(code);
+  const c = phOf(code) ? ph(code) : mk(code);
   const nm = NM.byCode[code];
   if(nm && !c.title) c.title = nm.title;
   (state.terms[term] = state.terms[term]||[]).push(c);
@@ -686,7 +755,7 @@ function addCourse(term, raw, open){
       const w = issues(c, find(c.id) ? find(c.id).t : term);
       toast(`Added ${code} · ${c.title}${w.length?` · ${w[0]}`:""}`);
     });
-  } else if(!CATMAP[code] && !PH[code] && open!==false) editDialog(c.id, true);
+  } else if(!CATMAP[code] && !phOf(code) && open!==false) editDialog(c.id, true);
   else toast(`Added ${code}${c.title?` · ${c.title}`:""}`);
 }
 function termName(id){ const t=TERMS[TERM_IDX[id]]; return `Year ${t.y} ${t.label}`; }
@@ -810,7 +879,7 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeDlg(); });
 function editDialog(id, isNew){
   const f=find(id); if(!f) return;
   const c=f.c;
-  const link = isPh(c) ? `https://nusmods.com/courses?q=${encodeURIComponent((PH[c.code]&&PH[c.code].q)||c.code)}` : `https://nusmods.com/courses/${encodeURIComponent(c.code)}`;
+  const link = isPh(c) ? `https://nusmods.com/courses?q=${encodeURIComponent((phOf(c.code)&&phOf(c.code).q)||c.code)}` : `https://nusmods.com/courses/${encodeURIComponent(c.code)}`;
   openDlg(`
     <div><div class="eyebrow">${isNew?"New course · not found on NUSMods":"Edit course"}</div><h2 class="mono" style="font-size:1.3rem">${esc(c.code)}</h2></div>
     <a href="${link}" target="_blank" rel="noopener">${isPh(c)?"Browse matching courses on NUSMods":"Open "+esc(c.code)+" on NUSMods"} ↗</a>
@@ -845,13 +914,18 @@ function editDialog(id, isNew){
 
 function fillPickers(){
   const opt = (k,p)=>`<option value="${k}">${esc(p.name)}</option>`;
-  $("#maj-sel").innerHTML = Object.entries(P.MAJORS).map(([k,p])=>opt(k,p)).join("");
+  const fac = {};
+  Object.entries(P.MAJORS).forEach(([k,p])=>{ (fac[p.faculty]=fac[p.faculty]||[]).push([k,p]); });
+  $("#maj-sel").innerHTML = Object.entries(fac).map(([f,list])=>`<optgroup label="${esc(f)}">${list.sort((a,b)=>a[1].name.localeCompare(b[1].name)).map(([k,p])=>opt(k,p)).join("")}</optgroup>`).join("")
+    + `<optgroup label="Other"><option value="custom">Other programme (enter your own requirements)…</option></optgroup>`;
+  $("#rc-sel").innerHTML = Object.entries(P.RCS).map(([k,r])=>`<option value="${k}">${esc(r.name)}</option>`).join("");
   $("#sm-sel").innerHTML = `<option value="">None</option>` + Object.entries(P.SECOND).map(([k,p])=>opt(k,p)).join("");
   document.querySelectorAll(".mn-sel").forEach(s=>{ s.innerHTML = `<option value="">None</option>` + Object.entries(P.MINORS).map(([k,p])=>opt(k,p)).join(""); });
 }
 $("#maj-sel").onchange=e=>{
+  if(e.target.value==="custom"){ state.major="custom"; if(!state.custom) state.custom={name:"",units:160,text:""}; save(); render(); customDialog(); return; }
   if(isUntouchedStarter()){
-    const keep={second:state.second, minors:state.minors};
+    const keep={second:state.second, minors:state.minors, rc:state.rc, custom:state.custom};
     state = withStarter(e.target.value, keep);
   }
   state.major=e.target.value;
@@ -860,6 +934,24 @@ $("#maj-sel").onchange=e=>{
   save(); render();
   toast(`Switched to ${major().name}${state.starterSig && isUntouchedStarter()?", with its sample plan":""}${bad.length?". Removed a programme not open to this major":""}`);
 };
+$("#rc-sel").onchange=e=>{ state.rc=e.target.value||""; save(); render(); toast(state.rc ? `${P.RCS[state.rc].name} courses now count toward the requirements they replace` : "Residential college removed"); };
+document.addEventListener("click", e=>{ if(e.target.id==="edit-custom") customDialog(); });
+function customDialog(){
+  const c = state.custom || {name:"",units:160,text:""};
+  const example = "Common Curriculum | 40 | GE%, ES2631, DTK1234\nMajor core | 40 | AR1101, AR2101, AR3101\nMajor electives | 40 | AR%, LA%";
+  openDlg(`<div><div class="eyebrow">Other programme</div><h2 style="font-size:1.2rem">Enter your own requirements</h2></div>
+    <p style="margin:0;color:var(--muted);font-size:.85rem">One requirement group per line: <b>name | units | course codes</b>. Use % as a wildcard (AR% = any AR course). Whatever is left of the total becomes Unrestricted Electives.</p>
+    <div class="row2"><label>Programme name<input id="cu-name" value="${esc(c.name)}" placeholder="e.g. B.Arts (Architecture)"></label><label>Total units<input id="cu-units" type="number" min="40" max="400" value="${esc(c.units||160)}"></label></div>
+    <label>Requirement groups<textarea id="cu-text" placeholder="${esc(example)}">${esc(c.text||"")}</textarea></label>
+    <div class="dlg-f"><button type="button" class="btn" id="cu-ex">Insert example</button><div><button type="button" class="btn" id="cu-cancel">Cancel</button><button type="button" class="btn primary" id="cu-save">Save</button></div></div>`);
+  $("#cu-ex").onclick=()=>{ $("#cu-text").value = example; };
+  $("#cu-cancel").onclick=closeDlg;
+  $("#cu-save").onclick=()=>{
+    state.custom = {name:$("#cu-name").value.trim(), units:+$("#cu-units").value||160, text:$("#cu-text").value};
+    state.major="custom"; save(); render(); closeDlg();
+    toast(`${parseCustom(state.custom.text).length} requirement group(s) saved`);
+  };
+}
 $("#sm-sel").onchange=e=>{ state.second=e.target.value||null; save(); render(); if(state.second) toast(`Second major in ${EXTRA[state.second].name} added to the requirements panel`); };
 document.querySelectorAll(".mn-sel").forEach((sel,i)=>{ sel.onchange=e=>{
   const m=(state.minors||[]).slice(); m[i]=e.target.value||null;
@@ -867,8 +959,10 @@ document.querySelectorAll(".mn-sel").forEach((sel,i)=>{ sel.onchange=e=>{
   if(e.target.value) toast(`Minor in ${EXTRA[e.target.value].name} added to the requirements panel`);
 }; });
 function welcome(){
-  const opts = Object.entries(P.MAJORS).map(([k,p])=>`<option value="${k}">${esc(p.name)}</option>`).join("");
-  openDlg(`<div><div class="eyebrow">Welcome</div><h2 style="font-size:1.3rem">Plan your NUS SoC degree</h2></div>
+  const fac = {};
+  Object.entries(P.MAJORS).forEach(([k,p])=>{ (fac[p.faculty]=fac[p.faculty]||[]).push([k,p]); });
+  const opts = Object.entries(fac).map(([f,list])=>`<optgroup label="${esc(f)}">${list.sort((a,b)=>a[1].name.localeCompare(b[1].name)).map(([k,p])=>`<option value="${k}">${esc(p.name)}</option>`).join("")}</optgroup>`).join("");
+  openDlg(`<div><div class="eyebrow">Welcome</div><h2 style="font-size:1.3rem">Plan your NUS degree</h2></div>
     <p style="margin:0;color:var(--muted)">Pick your major to preview its sample plan behind this box: every required course already placed across 4 years. Start from it, or with an empty plan. You can change both later. Your plan is saved only in this browser.</p>
     <label>Your major<select id="w-major">${opts}</select></label>
     <div class="dlg-f"><button type="button" class="btn" id="w-empty">Start empty</button><button type="button" class="btn primary" id="w-starter">Start with sample plan</button></div>`);
@@ -886,8 +980,8 @@ $("#btn-reset").onclick=()=>{
   openDlg(`<h2>Reset the planner</h2><p style="margin:0;color:var(--muted)">This replaces everything on the page. Export first if you want a copy. The sample plan places every required course for ${esc(major().name)} across 4 years; you add your electives.</p>
     <div class="dlg-f"><button type="button" class="btn" id="r-cancel">Cancel</button><div><button type="button" class="btn" id="r-clear">Start empty</button><button type="button" class="btn primary" id="r-sample">Load sample plan</button></div></div>`);
   $("#r-cancel").onclick=closeDlg;
-  $("#r-clear").onclick=()=>{ state={v:2,major:state.major,second:state.second,minors:state.minors||[],showST:{},terms:{}}; save(); render(); closeDlg(); toast("Planner cleared"); };
-  $("#r-sample").onclick=()=>{ state=withStarter(state.major,{second:state.second,minors:state.minors}); save(); render(); closeDlg(); toast("Sample plan loaded. Switch major above to see another major's sample"); };
+  $("#r-clear").onclick=()=>{ state={v:2,major:state.major,second:state.second,minors:state.minors||[],rc:state.rc,custom:state.custom,showST:{},terms:{}}; save(); render(); closeDlg(); toast("Planner cleared"); };
+  $("#r-sample").onclick=()=>{ state=withStarter(state.major,{second:state.second,minors:state.minors,rc:state.rc,custom:state.custom}); save(); render(); closeDlg(); toast("Sample plan loaded. Switch major above to see another major's sample"); };
 };
 $("#btn-io").onclick=()=>{
   openDlg(`<h2>Export / Import</h2><label>Your plan as text. Copy it to back up, or paste a saved plan and press Import.<textarea id="io-t">${esc(JSON.stringify(state))}</textarea></label>
@@ -907,7 +1001,8 @@ function toast(msg){ let el=$("#toast"); if(!el){ el=document.createElement("div
 const LS="nus-cs-planner-v1";
 function normalize(s){
   s.showST=s.showST||{}; s.terms=s.terms||{};
-  if(!P.MAJORS[s.major]) s.major="cs";
+  if(!P.MAJORS[s.major] && s.major!=="custom") s.major="cs";
+  if(!P.RCS[s.rc||""]) s.rc="";
   if(s.second==="math") s.second="ma2";
   if(s.second && !P.SECOND[s.second]) s.second=null;
   s.minors=(s.minors||[]).filter(k=>P.MINORS[k]);
