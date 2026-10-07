@@ -414,15 +414,21 @@ function cdeCC(){
     c("pm","Project Management",["PF1101A","PF1101%"],null,"CDE CC")
   ];
 }
-const ENG_CORE = {k:"core", name:"Engineering Core", short:"Eng Core", units:20, reqs:[
-  {label:"Engineering maths: MA1511 / MA1512 / MA1513 / CE2407A (8u)", any:["MA1511","MA1512","MA1513","CE2407A","MA1505","MA1508E","CE2407B"], units:8},
+/* Engineering maths differ by programme: most take MA1511 + MA1512 + MA1513 + CE2407A,
+   CEG, EE, ESP and ISE take MA1511 + MA1512 + MA1508E, and ME takes MA1505 + MA1512 + MA1513. */
+const MATHS_STD = ["MA1511","MA1512","MA1513","CE2407A","MA1505","MA1508E","CE2407B"];
+const MATHS_1508E = ["MA1511","MA1512","MA1508E","MA1513","CE2407A","MA1505"];
+const MATHS_ME = ["MA1505","MA1512","MA1513","MA1511","CE2407A","MA1508E"];
+const MATHS_LABEL = m => m===MATHS_1508E ? "MA1511 + MA1512 + MA1508E" : m===MATHS_ME ? "MA1505 + MA1512 + MA1513" : "MA1511 + MA1512 + MA1513 + CE2407A";
+const engCore = maths => ({k:"core", name:"Engineering Core", short:"Eng Core", units:20, reqs:[
+  {label:`Engineering maths: ${MATHS_LABEL(maths)} (8u)`, any:maths, units:8},
   {label:"EG2401A Engineering Professionalism", any:["EG2401A"]},
-  {label:"EG3611A Industrial Attachment (10u)", any:["EG3611A","EG3611%","EG3612%"]}]};
+  {label:"EG3611A Industrial Attachment (10u)", any:["EG3611A","EG3611%","EG3612%"]}]});
 function engMajor(o){
   return {
     faculty:"Design & Engineering", name:o.name, degree:`B.Eng. (Hons) ${o.name}`, cohort:o.cohort||"Cohorts AY2025/26 onwards", units:160,
     simplified:o.simplified, sources:[...(o.sources||[]), CDE_SRC],
-    groups:[...cdeCC(), ENG_CORE,
+    groups:[...cdeCC(), engCore(o.maths||MATHS_STD),
       {k:"maj", name:`${o.name} Major`, short:"Major", units:60, reqs:(o.req||[]).map(c=>typeof c==="string"?{label:c, any:[c]}:c),
         pool:o.pool, hint:o.simplified?`Simplified: any ${o.pool.map(p=>p.replace("%","")).join("/")}-coded course counts here. Check your department's curriculum for compulsory courses.`:"Technical electives fill the rest of this group."},
       UE(40)]
@@ -431,16 +437,17 @@ function engMajor(o){
 const CDE_MAJORS = {
   bme: engMajor({name:"Biomedical Engineering", sources:[CDE_SRC],
     req:["BN1112","BN2104","BN2105","BN2112","BN2201","BN2204","BN2301","BN2404","BN3101A","BN3405","BN3406","BN4101"], pool:["BN%"]}),
-  me: engMajor({name:"Mechanical Engineering", sources:[{label:"Dept of Mechanical Engineering", url:"https://cde.nus.edu.sg/me/wp-content/uploads/sites/11/2025/07/Sample-Schedule-for-Mechanical-Engineering-Students-from-AY2025-26-Onwards-3.pdf"}],
+  me: engMajor({name:"Mechanical Engineering", maths:MATHS_ME, sources:[{label:"Dept of Mechanical Engineering", url:"https://cde.nus.edu.sg/me/wp-content/uploads/sites/11/2025/07/Sample-Schedule-for-Mechanical-Engineering-Students-from-AY2025-26-Onwards-3.pdf"}],
     req:["ME1103","ME2102","ME2105","ME2116","ME2121","ME2134","ME2162","ME3115","ME3123","ME3142","ME4101A"], pool:["ME%"]}),
   ese: engMajor({name:"Environmental and Sustainability Engineering", sources:[{label:"Dept of Civil & Environmental Engineering", url:"https://cde.nus.edu.sg/cee/wp-content/uploads/sites/7/2025/03/ESEDegreeRequirementsAY2025_26-Feb.pdf"}],
     req:["ESE2000","ESE2001","ESE2101","ESE2102","CE2134","ESE3101","ESE3201","ESE3301","ESE3401","ESE4408","ESE4501","ESE4502R"], pool:["ESE%","CE%"]}),
   mse: engMajor({name:"Materials Science and Engineering", sources:[{label:"Dept of Materials Science & Engineering", url:"https://cde.nus.edu.sg/mse/wp-content/uploads/sites/4/2025/10/Matriculated_fm_AY2122.pdf"}],
     req:["MLE1001B","MLE2001A","MLE2102","MLE2103A","MLE2105","MLE3101A","MLE3101","MLE3103","MLE3111A","MLE3112"], pool:["MLE%"]}),
-  ise: engMajor({name:"Industrial and Systems Engineering", simplified:true, sources:[{label:"Dept of Industrial Systems Engineering & Management", url:"https://cde.nus.edu.sg/isem/wp-content/uploads/sites/12/2025/03/AY2025-26-onwards-ISE-Curriculum.pdf"}], pool:["IE%"]}),
-  ee: engMajor({name:"Electrical Engineering", simplified:true, sources:[{label:"Dept of Electrical & Computer Engineering", url:"https://cde.nus.edu.sg/ece/undergraduate/electrical-engineering/ee-curriculum-structure-ay2025-26/"}], pool:["EE%","CG%"]}),
-  ceg: engMajor({name:"Computer Engineering", simplified:true, sources:[{label:"Computer Engineering (CDE + SoC)", url:"https://ceg.nus.edu.sg/"}],
+  ise: engMajor({name:"Industrial and Systems Engineering", simplified:true, maths:MATHS_1508E, sources:[{label:"Dept of Industrial Systems Engineering & Management", url:"https://cde.nus.edu.sg/isem/wp-content/uploads/sites/12/2025/03/AY2025-26-onwards-ISE-Curriculum.pdf"}], pool:["IE%"]}),
+  ee: engMajor({name:"Electrical Engineering", simplified:true, maths:MATHS_1508E, sources:[{label:"Dept of Electrical & Computer Engineering", url:"https://cde.nus.edu.sg/ece/undergraduate/electrical-engineering/ee-curriculum-structure-ay2025-26/"}], pool:["EE%","CG%"]}),
+  ceg: engMajor({name:"Computer Engineering", simplified:true, maths:MATHS_1508E, sources:[{label:"Computer Engineering (CDE + SoC)", url:"https://ceg.nus.edu.sg/"}],
     req:["CG1111A","CG2111A","CG2023","CG2027","CG2028","CG2271","CS2040C","CS2113","EE2026","CG3207","CG4002"], pool:["CG%","EE%","CS%"]}),
+  esp: engMajor({name:"Engineering Science", simplified:true, maths:MATHS_1508E, sources:[{label:"Engineering Science Programme", url:"https://cde.nus.edu.sg/esp/"}], pool:["ESP%","EE%","ME%","PC%"]}),
   chbe: engMajor({name:"Chemical Engineering", simplified:true, sources:[{label:"Dept of Chemical & Biomolecular Engineering", url:"https://cde.nus.edu.sg/chbe/"}], pool:["CN%"]}),
   cve: engMajor({name:"Civil Engineering", simplified:true, sources:[{label:"Dept of Civil & Environmental Engineering", url:"https://cde.nus.edu.sg/cee/"}], pool:["CE%"]}),
   rmi: engMajor({name:"Robotics and Machine Intelligence", simplified:true, sources:[{label:"Dept of Mechanical Engineering", url:"https://cde.nus.edu.sg/me/undergraduate/beng-rmi/curriculum-structure/"}], pool:["RB%","ME%","EE%","CS%"]})
