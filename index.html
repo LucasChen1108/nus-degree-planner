@@ -260,8 +260,8 @@ const CAT = [
  ["EC1101E","Introduction to Economic Analysis",4],["EC2101","Microeconomic Analysis I",4],["EC2102","Macroeconomic Analysis I",4],
  ["MA1511","Engineering Calculus",2],["MA1512","Differential Equations for Engineering",2],["MA1513","Linear Algebra with Differential Equations",2],
  ["MA1508E","Linear Algebra for Engineering",4],["MA1505","Mathematics I",4],["CE2407A","Uncertainty Analysis for Engineers",2],["CE2407B","Numerical Methods for Engineers",2],["EG2401A","Engineering Professionalism",2],["EG3611A","Industrial Attachment",10],
- ["BN4101","B.Eng. Dissertation",8],["ESE4501","Design Project",8],["ME4101A","Bachelor of Engineering Dissertation",8],["MA4198","Mathematics Capstone Project",4],
- ["BSP1702","Legal Environment of Business",4],["BSP1703","Managerial Economics",4],["DAO1704","Decision Analytics using Spreadsheets",4],["RE1707","Real Estate Principles",4],["MNO2707","Business and Society",4],
+ ["BN4101","B.Eng. Dissertation",8],["ESE4501","Design Project",4],["ME4101A","Bachelor of Engineering Dissertation",8],["MA4198","Mathematics Capstone Project",4],
+ ["BSP1702","Legal Environment of Business",4],["ES2002","Business Communication for Leaders",4],["FSP4003","Field Service Project",8],["CN4118","B.Eng. Dissertation",8],["CG4002","Computer Engineering Capstone Project",8],["CG2027","Transistor-level Digital Circuits",2],["CG2028","Computer Organisation",2],["BSP1703","Managerial Economics",4],["DAO1704","Decision Analytics using Spreadsheets",4],["RE1707","Real Estate, Society and Enterprise",2],["MNO2707","Business Ethics",2],
  ["MA3201","Algebra II",4],["MA3210","Mathematical Analysis II",4],["MA3220","Ordinary Differential Equations",4],
  ["MA3236","Non-Linear Programming",4],["MA3238","Stochastic Processes I",4],["MA3252","Linear and Network Optimisation",4]
 ];
@@ -919,8 +919,14 @@ function fillPickers(){
   $("#maj-sel").innerHTML = Object.entries(fac).map(([f,list])=>`<optgroup label="${esc(f)}">${list.sort((a,b)=>a[1].name.localeCompare(b[1].name)).map(([k,p])=>opt(k,p)).join("")}</optgroup>`).join("")
     + `<optgroup label="Other"><option value="custom">Other programme (enter your own requirements)…</option></optgroup>`;
   $("#rc-sel").innerHTML = Object.entries(P.RCS).map(([k,r])=>`<option value="${k}">${esc(r.name)}</option>`).join("");
-  $("#sm-sel").innerHTML = `<option value="">None</option>` + Object.entries(P.SECOND).map(([k,p])=>opt(k,p)).join("");
-  document.querySelectorAll(".mn-sel").forEach(s=>{ s.innerHTML = `<option value="">None</option>` + Object.entries(P.MINORS).map(([k,p])=>opt(k,p)).join(""); });
+  const grouped = obj => {
+    const g = {};
+    Object.entries(obj).forEach(([k,p])=>{ (g[p.faculty||"Other"]=g[p.faculty||"Other"]||[]).push([k,p]); });
+    return `<option value="">None</option>` + Object.entries(g).sort((a,b)=>a[0].localeCompare(b[0]))
+      .map(([f,list])=>`<optgroup label="${esc(f)}">${list.sort((a,b)=>a[1].name.localeCompare(b[1].name)).map(([k,p])=>opt(k,p)).join("")}</optgroup>`).join("");
+  };
+  $("#sm-sel").innerHTML = grouped(P.SECOND);
+  document.querySelectorAll(".mn-sel").forEach(s=>{ s.innerHTML = grouped(P.MINORS); });
 }
 $("#maj-sel").onchange=e=>{
   if(e.target.value==="custom"){ state.major="custom"; if(!state.custom) state.custom={name:"",units:160,text:""}; save(); render(); customDialog(); return; }

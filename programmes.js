@@ -57,7 +57,7 @@ const DATA_LIT = ["GEA1000","BT1101","ST1131","DSA1101"];
 const UE = units => ({k:"ue", name:"Unrestricted Electives", short:"UE", units, ue:true, hint:"Any course, plus overflow from full requirement groups."});
 
 const CS_FOCUS = {
-  "Algorithms & Theory":["CS3230","CS3231","CS3236","CS4231","CS4232","CS4234","CS4330","CS4430"],
+  "Algorithms & Theory":["CS3230","CS3231","CS3236","CS4231","CS4234","CS4330","CS4430"],
   "Artificial Intelligence":["CS2109S","CS3243","CS3244","CS3263","CS3264","CS3268","CS4243","CS4244","CS4246","CS4248","CS4262","CS4263"],
   "Computer Graphics & Games":["CS3241","CS3242","CS3247","CS4247","CS4350"],
   "Computer Security":["CS2107","CS3235","CS4236","CS4230","CS4238","CS4239"],
@@ -250,8 +250,8 @@ function chsCC(o){
     c("si2","Scientific Inquiry II",["HSI20xx","SP3275"]),
     c("ai","Artificial Intelligence",["HS1501","HS1502","IT1244"]),
     c("dat","Data Literacy",["GEA1000","ST1131","DSA1101","DSE1101","BT1101"]),
-    c("dl","Digital Literacy", o.sci ? ["CS1010%","CS1101S","COS1000","COS2000","CM3267","ZB2201","SP2273"]
-                                     : ["GEI1001","GEI1002","NM2207","CS1010%","CS1101S","COS1000","COS2000"], {utcp:UT}),
+    c("dl","Digital Literacy", o.sci ? ["CS1010%","CS1101S","COS1000","CM3267","ZB2201","SP2273"]
+                                     : ["GEI1001","GEI1002","NM2207","CS1010%","CS1101S","COS1000"], {utcp:UT}),
     c("dt","Design Thinking",["DTK1234"]),
     c("ceng","Communities & Engagement",["GEN%"], {utcp:UT, rvrc:RV}),
     c("wr","Writing",["SP1541","SP1541X","FAS1101","SP2271","ES1103","ES2631"], {utcp:UT, rvrc:RV}),
@@ -264,13 +264,17 @@ function chsMajor(o){
   return {
     faculty:o.faculty, name:o.name, degree:o.degree, cohort:o.cohort||"Cohorts AY2021/22 onwards", units:160,
     simplified:o.simplified, sources:[...(o.sources||[]), CHS_SRC],
-    groups:[
-      ...chsCC({sci:o.faculty==="Science"}),
-      Object.assign({k:"maj", name:`${o.name} Major`, short:"Major", units:o.units||60, reqs:o.reqs||[],
-        pool:o.pool, checks:o.checks||[], suggest:o.suggest, hint:o.hint}, o.caps?{caps:o.caps}:{}),
-      ...(o.extraGroups||[]),
-      UE(160-52-(o.units||60)-(o.extraGroups||[]).reduce((a,g)=>a+g.units,0))
-    ]
+    groups:(()=>{
+      const cc = chsCC({sci:o.faculty==="Science"}).filter(g=>!(o.ccOmit||[]).includes(g.k));
+      const ccU = cc.reduce((a,g)=>a+g.units,0);
+      return [
+        ...cc,
+        Object.assign({k:"maj", name:`${o.name} Major`, short:"Major", units:o.units||60, reqs:o.reqs||[],
+          pool:o.pool, checks:o.checks||[], suggest:o.suggest, hint:o.hint}, o.caps?{caps:o.caps}:{}),
+        ...(o.extraGroups||[]),
+        UE(160-ccU-(o.units||60)-(o.extraGroups||[]).reduce((a,g)=>a+g.units,0))
+      ];
+    })()
   };
 }
 const FASS = "Arts & Social Sciences";
@@ -307,7 +311,7 @@ const CHS_MAJORS = {
       {label:"MA1100 Basic Discrete Mathematics", any:["MA1100","MA1100T","CS1231S"]},
       {label:"MA2001 Linear Algebra I", any:["MA2001","MA1522"]},{label:"MA2002 Calculus", any:["MA2002","MA1521"]},
       {label:"MA2101 Linear Algebra II", any:["MA2101","MA2101S"]},{label:"MA2104 Multivariable Calculus", any:["MA2104"]},
-      {label:"MA2108 Mathematical Analysis I", any:["MA2108","MA2108S"]},{label:"Probability: MA2116 / ST2131", any:["MA2116","MA2116T","MA2216","ST2131"]},
+      {label:"MA2108 Mathematical Analysis I", any:["MA2108","MA2108S"]},{label:"Probability: MA2116 / ST2131", any:["MA2116","MA2116T","ST2131"]},
       {label:"MA4198 Mathematics Capstone", any:["MA4198"]},
       {label:"5 courses: MA32xx / MA42xx / ST3236 / ST4238", any:["MA32xx","MA42xx","MA52xx","MA62xx","ST3236","ST4238","!MA[3-6]28[89]%"], pick:5},
       {label:"2 more: MA22xx / MA32xx / MA42xx", any:["MA22xx","MA32xx","MA42xx","!MA[2-4]28[89]%"], pick:2}],
@@ -345,16 +349,21 @@ const CHS_MAJORS = {
     sources:[{label:"Dept of Food Science & Technology", url:"https://www.fst.nus.edu.sg/education/undergraduate-programme/course-structure/primary-major-in-fst/"}],
     reqs:["FST1101B","FST2102B","FST2106","FST2109","FST2110","FST2201","FST3103","FST3107","FST3108","FST3109","FST3110","FST3111","FST3112","FST4103","FST4104"].map(c=>({label:c, any:[c]})),
     hint:"The Research & Innovation or Industrial Applications track adds a 12-unit project or internship from your UEs."}),
-  phs: chsMajor({faculty:"Science", name:"Pharmaceutical Science", degree:"B.Sc. (Hons) Pharmaceutical Science", units:64,
+  phs: chsMajor({faculty:"Science", name:"Pharmaceutical Science", degree:"B.Sc. (Hons) Pharmaceutical Science",
     sources:[{label:"Dept of Pharmacy & Pharmaceutical Sciences", url:"https://pharmacy.nus.edu.sg/wp-content/uploads/sites/6/2025/07/BSc-Pharm-Science-Course-Table-for-Cohort-AY2021-22-onwards-updated-2-Jul-2025.pdf"}],
     reqs:[
       ...["PHS1101","PHS2101","PHS2102","PHS2103","PHS2104","PHS2105","PHS2191","PHS3101","PHS3102","PHS3191","LSM3211","PHS4101","PHS4121"].map(c=>({label:c, any:[c]})),
       {label:"8 units: PHS4201 / PR4204 / PR4205 / PR4207 / PHS4288", any:["PHS4201","PR4204","PR4205","PR4207","PHS4288%","PHS4991"], units:8}]}),
-  dse: chsMajor({faculty:"Science", name:"Data Science and Economics", degree:"B.Sc. (Hons) Data Science and Economics", simplified:true,
-    sources:[{label:"Dept of Mathematics", url:"https://www.math.nus.edu.sg/ug/majmin/primajors/major-in-data-science-and-economics/"}],
-    reqs:[{label:"DSE1101", any:["DSE1101"]},{label:"EC1101E", any:["EC1101E"]},{label:"DSE3101", any:["DSE3101"]}],
-    pool:["DSE%","EC%","ST%","DSA%","MA%","CS2040%"], checks:lvl(16,12),
-    hint:"Simplified: DSE, EC, ST, DSA and MA courses fill this group. Check the department's PDF for the exact list."}),
+  dse: chsMajor({faculty:"Science", name:"Data Science and Economics", degree:"B.Sc. (Hons) Data Science and Economics", units:96,
+    ccOmit:["chsid","dat"],
+    sources:[{label:"Dept of Statistics & Data Science", url:"https://www.stat.nus.edu.sg/wp-content/uploads/sites/8/2024/06/120624-Major-Data-Science-and-Economics-Programme-Requirements-AY21-22-and-after.pdf"}],
+    reqs:[
+      ...["DSE1101","EC1101E","DSA2101","DSA2102","EC2101","EC2102","ST2132","DSA3102","DSE3101","EC3101","EC3102","EC3304","ST3131","DSE4101","EC4305"].map(c=>({label:c, any:[c]})),
+      {label:"CS2040 Data Structures and Algorithms", any:["CS2040","CS2040%"]},
+      {label:"MA2001 Linear Algebra I", any:["MA2001","MA1522"]},{label:"MA2002 Calculus", any:["MA2002","MA1521"]},
+      {label:"MA2311 / MA2104", any:["MA2311","MA2104"]},{label:"Probability: ST2131 / MA2116", any:["ST2131","MA2116","MA2116T"]},
+      {label:"4 electives: DSA4264/65, DSE4201, DSE4211, DSE4212, DSE4231, EC4308, FE5213", any:["DSA4264","DSA4265","DSE4201","DSE4211","QF4211","DSE4212","QF4212","DSE4231","EC4308","FE5213"], pick:4}],
+    hint:"DSE replaces the two Interdisciplinary courses, and DSE1101 covers Data Literacy, so the Common Curriculum is 40 units."}),
 
   /* ---- Arts & Social Sciences ---- */
   econ: fassMajor("econ","Economics",["EC"], {degree:"B.Soc.Sci. (Hons) Economics",
@@ -415,15 +424,17 @@ function cdeCC(){
   ];
 }
 /* Engineering maths differ by programme: most take MA1511 + MA1512 + MA1513 + CE2407A,
-   CEG, EE, ESP and ISE take MA1511 + MA1512 + MA1508E, and ME takes MA1505 + MA1512 + MA1513. */
+   CEG, EE, ESP and ISE take MA1511 + MA1512 + MA1508E, ME takes MA1505 + MA1512 + MA1513,
+   and BME / Civil take MA1511 + MA1513 + CE2407A + CE2407B. */
 const MATHS_STD = ["MA1511","MA1512","MA1513","CE2407A","MA1505","MA1508E","CE2407B"];
 const MATHS_1508E = ["MA1511","MA1512","MA1508E","MA1513","CE2407A","MA1505"];
 const MATHS_ME = ["MA1505","MA1512","MA1513","MA1511","CE2407A","MA1508E"];
-const MATHS_LABEL = m => m===MATHS_1508E ? "MA1511 + MA1512 + MA1508E" : m===MATHS_ME ? "MA1505 + MA1512 + MA1513" : "MA1511 + MA1512 + MA1513 + CE2407A";
+const MATHS_CVE = ["MA1511","MA1513","CE2407A","CE2407B","MA1512","MA1505"];
+const MATHS_LABEL = m => m===MATHS_1508E ? "MA1511 + MA1512 + MA1508E" : m===MATHS_ME ? "MA1505 + MA1512 + MA1513" : m===MATHS_CVE ? "MA1511 + MA1513 + CE2407A + CE2407B" : "MA1511 + MA1512 + MA1513 + CE2407A";
 const engCore = maths => ({k:"core", name:"Engineering Core", short:"Eng Core", units:20, reqs:[
   {label:`Engineering maths: ${MATHS_LABEL(maths)} (8u)`, any:maths, units:8},
   {label:"EG2401A Engineering Professionalism", any:["EG2401A"]},
-  {label:"EG3611A Industrial Attachment (10u)", any:["EG3611A","EG3611%","EG3612%"]}]});
+  {label:"EG3611A Industrial Attachment (10u), or ATAP", any:["EG3611A","EG3611%","EG3612%","CP3880"]}]});
 function engMajor(o){
   return {
     faculty:"Design & Engineering", name:o.name, degree:`B.Eng. (Hons) ${o.name}`, cohort:o.cohort||"Cohorts AY2025/26 onwards", units:160,
@@ -435,7 +446,7 @@ function engMajor(o){
   };
 }
 const CDE_MAJORS = {
-  bme: engMajor({name:"Biomedical Engineering", sources:[CDE_SRC],
+  bme: engMajor({name:"Biomedical Engineering", maths:MATHS_CVE, sources:[CDE_SRC],
     req:["BN1112","BN2104","BN2105","BN2112","BN2201","BN2204","BN2301","BN2404","BN3101A","BN3405","BN3406","BN4101"], pool:["BN%"]}),
   me: engMajor({name:"Mechanical Engineering", maths:MATHS_ME, sources:[{label:"Dept of Mechanical Engineering", url:"https://cde.nus.edu.sg/me/wp-content/uploads/sites/11/2025/07/Sample-Schedule-for-Mechanical-Engineering-Students-from-AY2025-26-Onwards-3.pdf"}],
     req:["ME1103","ME2102","ME2105","ME2116","ME2121","ME2134","ME2162","ME3115","ME3123","ME3142","ME4101A"], pool:["ME%"]}),
@@ -445,11 +456,13 @@ const CDE_MAJORS = {
     req:["MLE1001B","MLE2001A","MLE2102","MLE2103A","MLE2105","MLE3101A","MLE3101","MLE3103","MLE3111A","MLE3112"], pool:["MLE%"]}),
   ise: engMajor({name:"Industrial and Systems Engineering", simplified:true, maths:MATHS_1508E, sources:[{label:"Dept of Industrial Systems Engineering & Management", url:"https://cde.nus.edu.sg/isem/wp-content/uploads/sites/12/2025/03/AY2025-26-onwards-ISE-Curriculum.pdf"}], pool:["IE%"]}),
   ee: engMajor({name:"Electrical Engineering", simplified:true, maths:MATHS_1508E, sources:[{label:"Dept of Electrical & Computer Engineering", url:"https://cde.nus.edu.sg/ece/undergraduate/electrical-engineering/ee-curriculum-structure-ay2025-26/"}], pool:["EE%","CG%"]}),
-  ceg: engMajor({name:"Computer Engineering", simplified:true, maths:MATHS_1508E, sources:[{label:"Computer Engineering (CDE + SoC)", url:"https://ceg.nus.edu.sg/"}],
-    req:["CG1111A","CG2111A","CG2023","CG2027","CG2028","CG2271","CS2040C","CS2113","EE2026","CG3207","CG4002"], pool:["CG%","EE%","CS%"]}),
+  ceg: engMajor({name:"Computer Engineering", maths:MATHS_1508E, sources:[{label:"CEG briefing AY2025/26", url:"https://ceg.nus.edu.sg/wp-content/uploads/sites/4/2025/07/CEG1-Briefing_AY25-26_Jithin.pdf"}],
+    req:["CG1111A","CG2111A",{label:"CS1231 Discrete Structures", any:["CS1231","CS1231S"]},"CG2023","CG2027","CG2028","CG2271","CG3201","CG3207","CS2040C","CS2107","CS2113","EE2026","EE4204",{label:"Integrated Project (8u)", any:["CG4002"]}], pool:["CG%","EE%","CS%"]}),
   esp: engMajor({name:"Engineering Science", simplified:true, maths:MATHS_1508E, sources:[{label:"Engineering Science Programme", url:"https://cde.nus.edu.sg/esp/"}], pool:["ESP%","EE%","ME%","PC%"]}),
-  chbe: engMajor({name:"Chemical Engineering", simplified:true, sources:[{label:"Dept of Chemical & Biomolecular Engineering", url:"https://cde.nus.edu.sg/chbe/"}], pool:["CN%"]}),
-  cve: engMajor({name:"Civil Engineering", simplified:true, sources:[{label:"Dept of Civil & Environmental Engineering", url:"https://cde.nus.edu.sg/cee/"}], pool:["CE%"]}),
+  chbe: engMajor({name:"Chemical Engineering", sources:[{label:"Chemical Engineering schedule AY2025", url:"https://cde.nus.edu.sg/escholars/wp-content/uploads/sites/13/2025/07/AY2025-CHE-schedule-e-scholars.pdf"}],
+    req:["CN1101A","CN2102","CN2103","CN2104","CN2105","CN2109","CN2110","CN2111","CN3104","CN3105","CN3106","CN4101","CN4102",{label:"CN4118 / CN4119 Dissertation or Design Project", any:["CN4118","CN4118%","CN4119%"]}], pool:["CN%"]}),
+  cve: engMajor({name:"Civil Engineering", simplified:true, maths:MATHS_CVE, sources:[{label:"Dept of Civil & Environmental Engineering", url:"https://cde.nus.edu.sg/cee/wp-content/uploads/sites/7/2022/08/CVE_Degree-Requirements-AY2022-03082022.pdf"}],
+    req:["CE1103","CE2134","CE2155"], pool:["CE%"]}),
   rmi: engMajor({name:"Robotics and Machine Intelligence", simplified:true, sources:[{label:"Dept of Mechanical Engineering", url:"https://cde.nus.edu.sg/me/undergraduate/beng-rmi/curriculum-structure/"}], pool:["RB%","ME%","EE%","CS%"]})
 };
 
@@ -460,14 +473,19 @@ const CDE_MAJORS = {
 const BIZ_SRC = {label:"BBA curriculum AY2024/25–2025/26", url:"https://bba.nus.edu.sg/academic-programmes/bba-programme/curriculum-ay2023-2024-for-students-who-switched-ay2024-2025/"};
 function bizCC(){
   return [
-    ...sixPillars({dl:["CS1010%","GEI%","IT1244","CS1101S"], ce:["ES2002","GEX%"], dat:["GEA1000"]}),
-    {k:"be", name:"Business Environment", short:"Biz Env", units:20, cc:true, reqs:
-      ["BSP1702","BSP1703","DAO1704","RE1707","MNO2707"].map(c=>({label:c, any:[c, c+"X"]}))},
-    {k:"fsp", name:"Field Service Project", short:"FSP", units:8, cc:true, reqs:[{label:"Field Service Project, level 4000 (8u)", any:["BSN48%","BSP48%","FSP%"], units:8}],
-      hint:"If your FSP course isn't recognised automatically, set it to count here in its edit dialog."}
+    ...sixPillars({dl:["GEI%","CS1010%","IT1244","CS1101S"], ce:["GEX%"], dat:["GEA1000"]}),
+    {k:"be", name:"Business Environment", short:"Biz Env", units:20, cc:true, reqs:[
+      {label:"BSP1702 Legal Environment of Business", any:["BSP1702","BSP1702X"]},
+      {label:"BSP1703 Managerial Economics", any:["BSP1703","BSP1703X"]},
+      {label:"DAO1704 Decision Analytics using Spreadsheets and AI", any:["DAO1704","DAO1704X"]},
+      {label:"ES2002 Business Communication for Leaders", any:["ES2002"]},
+      {label:"RE1707 Real Estate, Society and Enterprise (2u)", any:["RE1707"]},
+      {label:"MNO2707 Business Ethics (2u)", any:["MNO2707"]}],
+      hint:"DAO1704 can also satisfy the Digital Literacy pillar. If yours does, set your Digital Literacy course in its edit dialog."},
+    {k:"fsp", name:"Field Service Project", short:"FSP", units:8, cc:true, reqs:[{label:"FSP4003 Field Service Project (8u)", any:["FSP4003","FSP%"], units:8}]}
   ];
 }
-const BIZ_FUNC = {k:"bf", name:"Business Function Courses", short:"Biz Func", units:24, reqs:["ACC1701","MKT1705","MNO1706","DAO2702","DAO2703","FIN2704"].map(c=>({label:c, any:[c, c+"X"]}))};
+const BIZ_FUNC = {k:"bf", name:"Business Function Courses", short:"Biz Func", units:24, reqs:["ACC1701","MKT1705","MNO1706","DAO2702","DAO2703","FIN2704"].map(c=>({label:c, any:[c, c+"X"].filter(k=>k!=="DAO2703X")}))};
 function bizMajor(key,name,prefixes,o){
   o=o||{};
   const units=o.units||36, cap=o.capstone||"BSP4701";
@@ -507,6 +525,49 @@ const RCS = {
   nusc: {name:"NUS College", source:NUSC.source}
 };
 
+/* ---- Generic CHS second majors and minors (NUS-wide rules: 40 units with 12+ at level 3000,
+        or 20 units). Department pages list the exact courses. ---- */
+function chsSecond(name, prefixes, intro, majorKey, src, faculty){
+  return {name, kind:"second", units:40, share:16, cohort:"Admitted AY2021/22 onwards", faculty, not:majorKey?[majorKey]:[], simplified:true,
+    sources:[src], note:`Simplified: any ${prefixes.join("/")}-coded course counts. Check the department page for compulsory courses.`,
+    groups:[{k:"all", name:"Requirements", units:40,
+      reqs:intro?[{label:`${intro} (or another level-1000 ${prefixes[0]} course)`, any:[intro, prefixes[0]+"1%"]}]:[],
+      pool:prefixes.map(p=>p+"%"), checks:[{t:"minUnits", label:"Level-3000+ units", any:["@3+"], n:12}]}]};
+}
+function chsMinor(name, prefixes, intro, majorKey, src, faculty){
+  return {name, kind:"minor", units:20, share:8, cohort:"Admitted AY2021/22 onwards", faculty, not:majorKey?[majorKey]:[], simplified:true,
+    sources:[src], note:`Simplified: any ${prefixes.join("/")}-coded course counts. Check the department page for compulsory courses.`,
+    groups:[{k:"all", name:"Requirements", units:20,
+      reqs:intro?[{label:`${intro} (or another level-1000 ${prefixes[0]} course)`, any:[intro, prefixes[0]+"1%"]}]:[],
+      pool:prefixes.map(p=>p+"%")}]};
+}
+const F = "https://fass.nus.edu.sg/";
+const CHS_SUBJECTS = [
+  // key, name, prefixes, intro, major key, source, faculty
+  ["anth","Anthropology",["SC","AN"],null,"anth",{label:"Dept of Sociology & Anthropology", url:F+"socanth/"},"Arts & Social Sciences"],
+  ["ch","Chinese Studies",["CH"],"CH1101E","ch",{label:"Dept of Chinese Studies", url:F+"chs/"},"Arts & Social Sciences"],
+  ["cnm","Communications and New Media",["NM"],"NM1101E","cnm",{label:"Dept of Communications & New Media", url:F+"cnm/"},"Arts & Social Sciences"],
+  ["ell","English Language and Linguistics",["EL"],"EL1101E","ell",{label:"Dept of English, Linguistics & Theatre Studies", url:F+"elts/"},"Arts & Social Sciences"],
+  ["eng","English Literature",["EN"],"EN1101E","eng",{label:"Dept of English, Linguistics & Theatre Studies", url:F+"elts/"},"Arts & Social Sciences"],
+  ["geog","Geography",["GE"],"GE1101E","geog",{label:"Dept of Geography", url:F+"geog/major-programmes/"},"Arts & Social Sciences"],
+  ["gl","Global Studies",["GL"],"GL1101E","gl",{label:"Global Studies Programme", url:F+"globalstudies/"},"Arts & Social Sciences"],
+  ["hist","History",["HY"],"HY1101E","hist",{label:"Dept of History", url:F+"hist/"},"Arts & Social Sciences"],
+  ["js","Japanese Studies",["JS"],"JS1101E","js",{label:"Dept of Japanese Studies", url:F+"jps/"},"Arts & Social Sciences"],
+  ["ms","Malay Studies",["MS"],"MS1102E","ms",{label:"Dept of Malay Studies", url:F+"mls/"},"Arts & Social Sciences"],
+  ["phil","Philosophy",["PH"],null,"phil",{label:"Dept of Philosophy", url:F+"philo/"},"Arts & Social Sciences"],
+  ["pol","Political Science",["PS"],"PS1101E","pol",{label:"Dept of Political Science", url:F+"pol/"},"Arts & Social Sciences"],
+  ["psy","Psychology",["PL"],"PL1101E","psy",{label:"Dept of Psychology", url:F+"psy/second-major/"},"Arts & Social Sciences"],
+  ["soc","Sociology",["SC"],"SC1101E","soc",{label:"Dept of Sociology & Anthropology", url:F+"socanth/"},"Arts & Social Sciences"],
+  ["sn","South Asian Studies",["SN"],"SN1101E","sn",{label:"South Asian Studies Programme", url:F+"sas/"},"Arts & Social Sciences"],
+  ["se","Southeast Asian Studies",["SE"],"SE1101E","se",{label:"Dept of Southeast Asian Studies", url:F+"sea/"},"Arts & Social Sciences"],
+  ["ts","Theatre and Performance Studies",["TS"],"TS1101E","ts",{label:"Dept of English, Linguistics & Theatre Studies", url:F+"elts/"},"Arts & Social Sciences"],
+  ["chem","Chemistry",["CM"],"CM1102","chem",{label:"Dept of Chemistry", url:"https://chemistry.nus.edu.sg/"},"Science"],
+  ["phys","Physics",["PC"],"PC1101","phys",{label:"Dept of Physics", url:"https://www.physics.nus.edu.sg/"},"Science"],
+  ["fst","Food Science and Technology",["FST"],"FST1101B","fst",{label:"Dept of Food Science & Technology", url:"https://www.fst.nus.edu.sg/"},"Science"],
+  ["phs","Pharmaceutical Science",["PHS","PR"],"PHS1101","phs",{label:"Dept of Pharmacy & Pharmaceutical Sciences", url:"https://pharmacy.nus.edu.sg/"},"Science"],
+  ["ph","Public Health",["SPH"],null,null,{label:"Saw Swee Hock School of Public Health", url:"https://sph.nus.edu.sg/education/second-major-in-public-health/curriculum"},"Public Health"]
+];
+
 /* ---- Second majors (40 units, up to 16 shared) ---- */
 const MATH_DEPT = "https://www.math.nus.edu.sg/";
 const SECOND = {
@@ -521,7 +582,7 @@ const SECOND = {
         {label:"MA2101 Linear Algebra II", any:["MA2101","MA2101S"]},
         {label:"MA2104 / MA2311 / any MA22xx", any:["MA2104","MA2311","MA22xx","!MA2288%","!MA2289%"]},
         {label:"MA2108 Mathematical Analysis I", any:["MA2108","MA2108S"]},
-        {label:"Probability: ST2334 / MA2116 / ST2131", any:["ST2334","MA2116","MA2116T","MA2216","ST2131"]}]},
+        {label:"Probability: ST2334 / MA2116 / ST2131", any:["ST2334","MA2116","MA2116T","ST2131"]}]},
       {k:"l3", name:"Level 3000+", units:12, reqs:[
         {label:"3 courses: MA32xx / MA42xx / ST3236 / ST4238", any:["MA32xx","MA42xx","ST3236","ST4238","ME3291","ME4291","PC3274A","!MA[34]28[89]%"], pick:3}],
         suggest:["MA3201","MA3210","MA3236","MA3238","MA3252"]}
@@ -533,10 +594,10 @@ const SECOND = {
     groups:[
       {k:"l1", name:"Level 1000", units:4, reqs:[{label:"ST1131 Intro to Statistics", any:["ST1131"]}]},
       {k:"l2", name:"Level 2000", units:24, reqs:[
-        {label:"Linear algebra: MA1522 / MA2001", any:["MA1522","MA2001","MA1101R","MA1508E","MA1513"]},
-        {label:"Calculus: MA1521 / MA2002", any:["MA1521","MA2002","MA1102R","MA1312","MA1505","MA1511"]},
+        {label:"Linear algebra: MA1522 / MA2001", any:["MA1522","MA2001","MA1508E","MA1513"]},
+        {label:"Calculus: MA1521 / MA2002", any:["MA1521","MA2002","MA1312","MA1505","MA1511"]},
         {label:"MA2104 / MA2311 Advanced Calculus", any:["MA2104","MA2311"]},
-        {label:"Probability: ST2334 / ST2131 / MA2116", any:["ST2334","ST2131","MA2216","MA2116"]},
+        {label:"Probability: ST2334 / ST2131 / MA2116", any:["ST2334","ST2131","MA2116"]},
         {label:"ST2132 Mathematical Statistics", any:["ST2132"]},
         {label:"ST2137, or an ST32xx/ST42xx course", any:["ST2137","ST32xx","ST42xx","!ST328%","!ST4288"]}]},
       {k:"l3", name:"Level 3000+", units:12, reqs:[
@@ -651,7 +712,7 @@ const MINORS = {
     sources:[{label:"Dept of Mathematics", url:MATH_DEPT+"wp-content/uploads/sites/4/2024/04/MAmin_2122_12042024.pdf"}],
     groups:[
       {k:"l1", name:"Level 1000", units:8, reqs:[{label:"8 units: MA1xxx / MA20xx / CS1231S", any:["MA1xxx%","MA20xx","CS1231S","CS1231","!MA1301%"], units:8}]},
-      {k:"l2", name:"Level 2000", units:8, reqs:[{label:"2 of MA2101 / MA2104 / MA2108 / MA22xx / ST2334 / MA2116", any:["MA2101","MA2101S","MA2104","MA2311","MA22xx","MA2108","MA2108S","MA2116","MA2216","ST2131","ST2334","!MA2288%","!MA2289%"], pick:2}]},
+      {k:"l2", name:"Level 2000", units:8, reqs:[{label:"2 of MA2101 / MA2104 / MA2108 / MA22xx / ST2334 / MA2116", any:["MA2101","MA2101S","MA2104","MA2311","MA22xx","MA2108","MA2108S","MA2116","ST2131","ST2334","!MA2288%","!MA2289%"], pick:2}]},
       {k:"l3", name:"Level 3000", units:4, reqs:[{label:"1 of MA32xx / ST3236 / PC3274A", any:["MA32xx","ST3236","PC3274A","!MA328[89]%"]}]}
     ]
   },
@@ -662,7 +723,7 @@ const MINORS = {
       {k:"all", name:"Requirements", units:20, reqs:[
         {label:"ST1131 Intro to Statistics", any:["ST1131"]},
         {label:"Calculus: MA1521 / MA2002", any:["MA1521","MA2002","MA1312","MA1505","MA1511"]},
-        {label:"Probability: ST2334 / ST2131 / MA2116", any:["ST2334","ST2131","MA2216","MA2116"]},
+        {label:"Probability: ST2334 / ST2131 / MA2116", any:["ST2334","ST2131","MA2116"]},
         {label:"ST2132 or ST2137", any:["ST2132","ST2137"]},
         {label:"ST3131 or an ST32xx course", any:["ST3131","ST32xx","!ST328%"]}]}
     ]
@@ -731,6 +792,35 @@ const MINORS = {
     ]
   }
 };
+
+/* faculties for the pickers */
+const FAC = {ma2:"Science",st2:"Science",qf2:"Science",ec2:"Arts & Social Sciences",mgt2:"Business",cs2:"Computing",ba2:"Computing",isc2:"Computing",
+  mamin:"Science",stmin:"Science",ecmin:"Arts & Social Sciences",aimin:"Computing",csmin:"Computing",bamin:"Computing",iscmin:"Computing",imdmin:"Arts & Social Sciences"};
+Object.entries(FAC).forEach(([k,f])=>{ (SECOND[k]||MINORS[k]).faculty=f; });
+CHS_SUBJECTS.forEach(([k,name,pre,intro,mk,src,fac])=>{
+  if(!SECOND[k+"2"]) SECOND[k+"2"] = chsSecond(name,pre,intro,mk,src,fac);
+  if(!MINORS[k+"min"]) MINORS[k+"min"] = chsMinor(name,pre,intro,mk,src,fac);
+});
+/* Life Sciences: exact rules */
+const LSM_SRC = {label:"Dept of Biological Sciences", url:"https://www.dbs.nus.edu.sg/wp-content/uploads/sites/7/2024/07/lifesciencesAY2122.pdf"};
+const LSM_X = ["!LSM2288%","!LSM2289%","!LSM3289%","!LSM4288%"];
+SECOND.lsm2 = {name:"Life Sciences", kind:"second", units:40, share:16, cohort:"Admitted AY2021/22 onwards", faculty:"Science", not:["lsm"], sources:[LSM_SRC],
+  groups:[{k:"core", name:"Compulsory", units:16, reqs:["LSM1111","LSM2105","LSM2106","LSM2107"].map(c=>({label:c, any:[c]}))},
+    {k:"el", name:"Electives", units:24, reqs:[
+      {label:"16 units of LSM32xx / LSM42xx", any:["LSM32xx","LSM42xx","LSM4352","LSM3991","LSM4991",...LSM_X], units:16},
+      {label:"4 units of LSM21xx / LSM22xx", any:["LSM21xx","LSM22xx",...LSM_X], units:4},
+      {label:"4 more units of LSM22xx / 32xx / 42xx", any:["LSM22xx","LSM32xx","LSM42xx","LSM4352",...LSM_X], units:4}]}]};
+MINORS.lsmmin = {name:"Life Sciences", kind:"minor", units:20, share:8, cohort:"Admitted AY2021/22 onwards", faculty:"Science", not:["lsm"], sources:[LSM_SRC],
+  groups:[{k:"all", name:"Requirements", units:20, reqs:[
+    {label:"LSM1111", any:["LSM1111"]},
+    {label:"8 units of LSM32xx / LSM42xx", any:["LSM32xx","LSM42xx","LSM4352",...LSM_X], units:8},
+    {label:"4 units of LSM21xx / LSM22xx", any:["LSM21xx","LSM22xx",...LSM_X], units:4},
+    {label:"4 more units of LSM22xx / 32xx / 42xx", any:["LSM22xx","LSM32xx","LSM42xx","LSM4352",...LSM_X], units:4}]}]};
+/* Management minor for non-BBA students (simplified) */
+MINORS.mgtmin = {name:"Management", kind:"minor", units:20, share:8, cohort:"Non-BBA students, admitted AY2023/24 onwards", faculty:"Business", simplified:true,
+  not:["bfin","bmkt","bhcm","bops","bban","becn","binn","acc","re"], sources:[{label:"NUS Business School", url:"https://bba.nus.edu.sg/second-major-minors-for-non-bba-students/"}],
+  note:"Simplified: business-coded courses count. Check the official list.",
+  groups:[{k:"all", name:"Requirements", units:20, pool:["ACC%","BSP%","DAO%","FIN%","MKT%","MNO%","BSN%","BSE%","RE%"]}]};
 
 window.PROGRAMMES = { MAJORS, SECOND, MINORS, RCS, NUSC };
 })();
