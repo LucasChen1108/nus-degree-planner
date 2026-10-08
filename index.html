@@ -83,6 +83,19 @@ button{cursor:pointer}
 .bar{position:relative;height:14px;background:var(--sunk);border-radius:7px;overflow:hidden;margin-top:10px}
 .bar .pl{position:absolute;inset:0 auto 0 0;background:var(--navy-soft);border-right:2px solid var(--navy)}
 .bar .dn{position:absolute;inset:0 auto 0 0;background:var(--accent)}
+.bar .ip,.mini .ip{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(135deg,var(--accent) 0 4px,var(--accent-soft) 4px 8px)}
+.legend i.ipkey{background:repeating-linear-gradient(135deg,var(--accent) 0 3px,var(--accent-soft) 3px 6px)}
+.ipn{color:var(--accent);font-weight:600}
+.pill.prog{background:var(--accent-soft);color:var(--accent)}
+.course.is-prog{border-color:var(--accent);background:var(--surface)}
+.is-prog .tick{border-color:var(--accent);color:var(--accent)}
+.prog-tag{font-family:var(--f-body);font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--accent);background:var(--accent-soft);padding:0 5px;border-radius:4px}
+.term.current{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.cur-tag{font-family:var(--f-body);font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;background:var(--accent);color:var(--accent-ink);padding:1px 6px;border-radius:4px;vertical-align:2px}
+.cur-btn{margin-left:auto;margin-right:8px;background:none;border:0;padding:0;font-size:.72rem;color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+.cur-btn:hover{color:var(--accent)}
+.term:not(:hover):not(.current) .cur-btn{opacity:0}
+@media (hover:none){.term .cur-btn{opacity:1}}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--muted);margin-top:8px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
 .verdict{border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px}
@@ -111,6 +124,7 @@ button{cursor:pointer}
 .chip{font-family:var(--f-mono);font-size:.7rem;padding:1px 6px;border-radius:5px;border:1px solid var(--line);color:var(--muted)}
 .chip.done{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
 .chip.plan{background:var(--navy-soft);border-color:transparent;color:var(--navy)}
+.chip.prog{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .chip.add{border-style:dashed;cursor:pointer;background:none}
 .chip.add:hover{color:var(--accent);border-color:var(--accent)}
 
@@ -207,8 +221,8 @@ body.is-dragging *{cursor:grabbing!important}
     <div>
       <div class="eyebrow">Units completed</div>
       <div class="big"><b class="tnum" id="s-done">0</b><span class="tnum" id="s-sub">of 160 · 0 planned</span></div>
-      <div class="bar" aria-hidden="true"><div class="pl" id="s-pl"></div><div class="dn" id="s-dn"></div></div>
-      <div class="legend"><span><i style="background:var(--accent)"></i>Completed</span><span><i style="background:var(--navy-soft);border:1px solid var(--navy)"></i>Planned</span><span id="s-finish"></span><span id="s-ma2"></span></div>
+      <div class="bar" aria-hidden="true"><div class="pl" id="s-pl"></div><div class="ip" id="s-ip"></div><div class="dn" id="s-dn"></div></div>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Completed</span><span><i class="ipkey"></i>In progress</span><span><i style="background:var(--navy-soft);border:1px solid var(--navy)"></i>Planned</span><span id="s-finish"></span><span id="s-ma2"></span></div>
     </div>
     <div class="verdict" id="verdict"></div>
   </section>
@@ -378,7 +392,11 @@ function ordered(){
   return out;
 }
 const U = arr => arr.reduce((s,c)=>s+(+c.units||0),0);
+let TERM_OF = {};
+const inProg = c => !c.done && (!!c.prog || (!!state.current && TERM_OF[c.id]===state.current));
+const doneOrProg = c => c.done || inProg(c);
 function evaluate(prog, isMajor, rank){
+  TERM_OF = {}; ordered().forEach(o=>{ TERM_OF[o.c.id]=o.t; });
   const gs = prog.groups.map(g=>({g, items:[], pl:0, dn:0, capU:(g.caps||[]).map(()=>0),
     slots:(g.reqs||[]).map(r=>({r, items:[], u:0}))}));
   const where = {};
@@ -433,13 +451,15 @@ function evaluate(prog, isMajor, rank){
     });
   });
   gs.forEach(G=>{
-    G.pl=U(G.items); G.dn=U(G.items.filter(c=>c.done));
-    G.plC=Math.min(G.pl,G.g.units); G.dnC=Math.min(G.dn,G.g.units);
-    G.slots.forEach(s=>{ s.full=slotFull(s); s.doneFull = s.r.units ? U(s.items.filter(c=>c.done))>=s.r.units : s.items.filter(c=>c.done).length>=(s.r.pick||1); });
+    G.pl=U(G.items); G.dn=U(G.items.filter(c=>c.done)); G.dp=U(G.items.filter(doneOrProg));
+    G.plC=Math.min(G.pl,G.g.units); G.dnC=Math.min(G.dn,G.g.units); G.ipC=Math.min(G.dp,G.g.units)-G.dnC;
+    G.slots.forEach(s=>{ s.full=slotFull(s);
+      s.doneFull = s.r.units ? U(s.items.filter(c=>c.done))>=s.r.units : s.items.filter(c=>c.done).length>=(s.r.pick||1);
+      s.progFull = !s.doneFull && (s.r.units ? U(s.items.filter(doneOrProg))>=s.r.units : s.items.filter(doneOrProg).length>=(s.r.pick||1)); });
     G.rows = (G.g.checks||[]).flatMap(ch=>runCheck(ch,G,all));
   });
-  const pl = gs.reduce((a,G)=>a+G.plC,0), dn = gs.reduce((a,G)=>a+G.dnC,0);
-  return {prog, gs, where, pl, dn};
+  const pl = gs.reduce((a,G)=>a+G.plC,0), dn = gs.reduce((a,G)=>a+G.dnC,0), ip = gs.reduce((a,G)=>a+G.ipC,0);
+  return {prog, gs, where, pl, dn, ip};
 }
 function runCheck(ch,G,all){
   const items=G.items;
@@ -564,16 +584,18 @@ const $ = s=>document.querySelector(s);
 const esc = s=> String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 const pct = (a,b)=> Math.max(0,Math.min(100, b? a/b*100 : 0));
 const TICK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+const PROG = '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2zm0 1.6v8.8a4.4 4.4 0 0 1 0-8.8z"/></svg>';
 const GRIP = '<svg viewBox="0 0 10 16" fill="currentColor"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg>';
-const status = (dn,pl)=> dn ? '<span class="pill done">Done</span>' : pl ? '<span class="pill plan">Planned</span>' : '<span class="pill miss">Missing</span>';
+const status = (dn,pl,ip)=> dn ? '<span class="pill done">Done</span>' : ip ? '<span class="pill prog">In progress</span>' : pl ? '<span class="pill plan">Planned</span>' : '<span class="pill miss">Missing</span>';
 const rowStatus = r => r.limit ? (r.pl ? '<span class="pill done">OK</span>' : '<span class="pill miss">Too many</span>') : r.soft ? '<span class="pill plan">Optional</span>' : status(r.dn,r.pl);
 let LAST = null;
 
-function progressHead(name, dn, pl, units, cls){
-  return `<div class="req ${cls||""}"><div class="req-h"><h2>${esc(name)}</h2><span class="n tnum"><b>${dn}</b> / ${units}${pl>dn?` · ${pl} pl`:""}</span></div>
-    <div class="mini"><div class="pl" style="width:${pct(pl,units)}%"></div><div class="dn" style="width:${pct(dn,units)}%"></div></div>`;
+function progressHead(name, dn, pl, units, cls, ip){
+  ip = ip||0;
+  return `<div class="req ${cls||""}"><div class="req-h"><h2>${esc(name)}</h2><span class="n tnum"><b>${dn}</b>${ip?` <span class="ipn">+${ip}</span>`:""} / ${units}${pl>dn+ip?` · ${pl} pl`:""}</span></div>
+    <div class="mini"><div class="pl" style="width:${pct(pl,units)}%"></div><div class="ip" style="width:${pct(dn+ip,units)}%"></div><div class="dn" style="width:${pct(dn,units)}%"></div></div>`;
 }
-function chipFor(c){ return `<span class="chip ${c.done?"done":"plan"}" title="${esc(c.title||"")}">${esc(c.code)}</span>`; }
+function chipFor(c){ return `<span class="chip ${c.done?"done":inProg(c)?"prog":"plan"}" title="${esc(c.title||"")}${inProg(c)?" · in progress":""}">${esc(c.code)}</span>`; }
 function addChip(code,title){
   const label = phOf(code) ? code.replace(/(X+)$/,m=>m.toLowerCase()) : code;
   return `<button type="button" class="chip add" data-quick="${esc(code)}" title="${esc(title||("Add "+code+" to the next open term"))}">+ ${esc(label)}</button>`;
@@ -587,7 +609,7 @@ function groupBody(G, inPlan){
       else { const q=quickCode(s.r.any); chips += q ? addChip(q, s.r.label) : `<span class="chip" title="${esc(s.r.label)}">${esc(s.r.label)}</span>`; }
     } else {
       const have = s.r.units ? `${s.u}/${s.r.units}u` : `${s.items.length}/${s.r.pick}`;
-      rows += `<div><span class="lbl">${esc(s.r.label)} (${have})${s.items.length?` · ${s.items.map(c=>esc(c.code)).join(", ")}`:""}</span>${status(s.doneFull,s.full)}</div>`;
+      rows += `<div><span class="lbl">${esc(s.r.label)} (${have})${s.items.length?` · ${s.items.map(c=>esc(c.code)).join(", ")}`:""}</span>${status(s.doneFull,s.full,s.progFull)}</div>`;
     }
   });
   G.rows.forEach(r=>{ rows += `<div><span class="lbl">${esc(r.label)}</span>${rowStatus(r)}</div>`; });
@@ -630,8 +652,9 @@ function render(){
   /* summary */
   const raw = U(all);
   $("#s-done").textContent = R.dn;
-  $("#s-sub").textContent = `of ${TOTAL} · ${R.pl} planned (${Math.max(0,TOTAL-R.pl)} still unplanned)` + (raw>R.pl ? ` · ${raw-R.pl} extra units beyond the degree` : "");
+  $("#s-sub").textContent = `of ${TOTAL}${R.ip?` · ${R.ip} in progress`:""} · ${R.pl} planned (${Math.max(0,TOTAL-R.pl)} still unplanned)` + (raw>R.pl ? ` · ${raw-R.pl} extra units beyond the degree` : "");
   $("#s-dn").style.width = pct(R.dn,TOTAL)+"%";
+  $("#s-ip").style.width = pct(R.dn+R.ip,TOTAL)+"%";
   $("#s-pl").style.width = pct(R.pl,TOTAL)+"%";
   $("#s-ma2").textContent = X.map(x=>`${x.prog.kind==="minor"?"Minor":"Second major"} in ${x.prog.name}: ${x.R.dn}/${x.prog.units} done`).join(" · ");
 
@@ -678,16 +701,16 @@ function render(){
   let html = "";
   if(pil.length){
     const units=pil.reduce((a,G)=>a+G.g.units,0);
-    html += progressHead(pil.length>6 ? "Common Curriculum" : "University Pillars", pil.reduce((a,G)=>a+G.dnC,0), pil.reduce((a,G)=>a+G.plC,0), units)
+    html += progressHead(pil.length>6 ? "Common Curriculum" : "University Pillars", pil.reduce((a,G)=>a+G.dnC,0), pil.reduce((a,G)=>a+G.plC,0), units, "", pil.reduce((a,G)=>a+G.ipC,0))
       + `<div class="sub">${pil.map(G=>{ const s=G.slots[0], c=s.items[0];
-          return `<div><span class="lbl">${esc(G.g.name)}${c?` · ${esc(c.code)}`:""}</span>${c?status(s.doneFull,s.full):(()=>{const q=quickCode(s.r.any);return q?addChip(q,s.r.label):status(false,false);})()}</div>`; }).join("")}</div></div>`;
+          return `<div><span class="lbl">${esc(G.g.name)}${c?` · ${esc(c.code)}`:""}</span>${c?status(s.doneFull,s.full,s.progFull):(()=>{const q=quickCode(s.r.any);return q?addChip(q,s.r.label):status(false,false);})()}</div>`; }).join("")}</div></div>`;
   }
   R.gs.filter(G=>!G.g.pillar).forEach(G=>{
-    html += progressHead(G.g.name, G.dnC, G.plC, G.g.units) + groupBody(G, inPlan) + `</div>`;
+    html += progressHead(G.g.name, G.dnC, G.plC, G.g.units, "", G.ipC) + groupBody(G, inPlan) + `</div>`;
   });
   X.forEach(x=>{
     const label = `${x.prog.kind==="minor"?"Minor":"Second Major"} · ${x.prog.name}`;
-    html += progressHead(label, x.R.dn, x.R.pl, x.prog.units, "extra");
+    html += progressHead(label, x.R.dn, x.R.pl, x.prog.units, "extra", x.R.ip);
     if(x.blocked) html += `<div class="sub"><span class="lbl warn-text">Not open to ${esc(M.name)} students.</span></div>`;
     x.R.gs.forEach(G=>{ html += `<div class="eyebrow">${esc(G.g.name)} · ${G.plC}/${G.g.units}</div>` + groupBody(G, inPlan); });
     const need = x.prog.units - x.prog.share;
@@ -717,14 +740,17 @@ function render(){
       const list = state.terms[t.id]||[];
       const tu = list.reduce((s,c)=>s+(+c.units||0),0);
       const tdn = list.filter(c=>c.done).reduce((s,c)=>s+(+c.units||0),0);
-      yh += `<div class="term ${t.st?"st":""}" data-term="${t.id}"><div class="term-h"><h3>${t.label}</h3><span class="u tnum ${tu>24?"heavy":""}" title="${tu>24?"Heavy workload":""}">${tdn&&tdn<tu?`${tdn}/`:""}${tu} units</span></div><div class="list">`;
+      const isCur = state.current===t.id;
+      yh += `<div class="term ${t.st?"st":""} ${isCur?"current":""}" data-term="${t.id}"><div class="term-h"><h3>${t.label}${isCur?` <span class="cur-tag">Current</span>`:""}</h3>
+        <button type="button" class="cur-btn" data-cur="${t.id}" aria-pressed="${isCur}" title="${isCur?"Unmark as current semester":"Mark as your current semester: its courses count as in progress"}">${isCur?"Unset":"Set current"}</button><span class="u tnum ${tu>24?"heavy":""}" title="${tu>24?"Heavy workload":""}">${tdn&&tdn<tu?`${tdn}/`:""}${tu} units</span></div><div class="list">`;
       if(!list.length) yh += `<div class="empty">No courses yet</div>`;
       list.forEach(c=>{
         const b = R.where[c.id];
-        yh += `<div class="course ${c.done?"is-done":""} ${isPh(c)?"ph":""}" data-id="${c.id}">
+        const ip = inProg(c);
+        yh += `<div class="course ${c.done?"is-done":""} ${ip?"is-prog":""} ${isPh(c)?"ph":""}" data-id="${c.id}">
           <span class="grip" data-drag="${c.id}" title="Drag to move" aria-hidden="true">${GRIP}</span>
-          <button type="button" class="tick" data-tog="${c.id}" aria-pressed="${c.done}" aria-label="Mark ${esc(c.code)} ${c.done?"not done":"done"}">${c.done?TICK:""}</button>
-          <button type="button" class="c-body" data-edit="${c.id}" aria-label="Edit ${esc(c.code)}"><span class="c-code">${esc(c.code)}</span><span class="c-title">${esc(c.title||"Tap to add a title")}</span>${(()=>{const w=issues(c,t.id);return w.length?`<span class="c-warn" title="${esc(w.join(". "))}">⚠ ${esc(w[0])}</span>`:"";})()}</button>
+          <button type="button" class="tick" data-tog="${c.id}" aria-pressed="${c.done}" aria-label="Mark ${esc(c.code)} ${c.done?"not done":"done"}">${c.done?TICK:ip?PROG:""}</button>
+          <button type="button" class="c-body" data-edit="${c.id}" aria-label="Edit ${esc(c.code)}"><span class="c-code">${esc(c.code)}${ip?` <span class="prog-tag">In progress</span>`:""}</span><span class="c-title">${esc(c.title||"Tap to add a title")}</span>${(()=>{const w=issues(c,t.id);return w.length?`<span class="c-warn" title="${esc(w.join(". "))}">⚠ ${esc(w[0])}</span>`:"";})()}</button>
           <span class="c-side"><span class="c-u tnum">${c.units}u</span>${b&&gk[b]?`<span class="bk ${b==="ue"?"ue":""}" title="Counts toward ${esc(gk[b].name)}">${esc(gk[b].short||gk[b].name)}</span>`:""}${extraBadge(c.id).map(t=>`<span class="bk ex" title="Also counts toward your ${t==="2M"?"second major":"minor"}">${t}</span>`).join("")}</span></div>`;
       });
       yh += `</div><form class="adder" data-add="${t.id}"><input id="add-${t.id}" list="catalog" placeholder="Add course code" autocomplete="off" aria-label="Add course to Year ${y} ${t.label}"><button type="submit" aria-label="Add">+</button></form></div>`;
@@ -849,11 +875,14 @@ document.addEventListener("click", e=>{ if(suppressClick){ e.stopPropagation(); 
 
 document.addEventListener("click", e=>{
   const tog = e.target.closest("[data-tog]");
-  if(tog){ const f=find(tog.dataset.tog); if(f){ f.c.done=!f.c.done; save(); render(); } return; }
+  if(tog){ const f=find(tog.dataset.tog); if(f){ f.c.done=!f.c.done; if(f.c.done) f.c.prog=false; save(); render(); } return; }
   const ed = e.target.closest("[data-edit]");
   if(ed){ editDialog(ed.dataset.edit); return; }
   const q = e.target.closest("[data-quick]");
   if(q){ const t=nextOpenTerm(); addCourse(t,q.dataset.quick,false); toast(`Added ${q.dataset.quick} to ${termName(t)}`); return; }
+  const cur = e.target.closest("[data-cur]");
+  if(cur){ state.current = state.current===cur.dataset.cur ? null : cur.dataset.cur; save(); render();
+    toast(state.current ? `${termName(state.current)} set as your current semester` : "Current semester cleared"); return; }
   const st = e.target.closest("[data-st]");
   if(st){ state.showST[st.dataset.st]=true; save(); render(); const inp=document.getElementById("add-"+st.dataset.st); if(inp) inp.focus(); return; }
 });
@@ -897,7 +926,7 @@ function editDialog(id, isNew){
     </div>
     <div class="row2">
       <label>Term<select id="e-term">${TERMS.map(t=>`<option value="${t.id}" ${t.id===f.t?"selected":""}>Year ${t.y} ${t.label}</option>`).join("")}</select></label>
-      <label>Status<select id="e-done"><option value="0">Planned</option><option value="1" ${c.done?"selected":""}>Completed</option></select></label>
+      <label>Status<select id="e-done"><option value="0">Planned</option><option value="2" ${!c.done&&c.prog?"selected":""}>In progress</option><option value="1" ${c.done?"selected":""}>Completed</option></select></label>
     </div>
     <div class="dlg-f"><button type="button" class="btn danger" id="e-del">Remove</button><div><button type="button" class="btn" id="e-cancel">Cancel</button><button type="button" class="btn primary" id="e-save">Save</button></div></div>`);
   $("#e-cancel").onclick=closeDlg;
@@ -905,7 +934,7 @@ function editDialog(id, isNew){
   $("#e-save").onclick=()=>{
     const code=$("#e-code").value.trim().toUpperCase()||c.code;
     c.code=code; c.title=$("#e-title").value.trim(); c.units=Math.max(0,+$("#e-units").value||0);
-    c.bucket=$("#e-bucket").value; c.tag=$("#e-tag").value; c.done=$("#e-done").value==="1";
+    c.bucket=$("#e-bucket").value; c.tag=$("#e-tag").value; c.done=$("#e-done").value==="1"; c.prog=$("#e-done").value==="2";
     const nt=$("#e-term").value;
     if(nt!==f.t){ state.terms[f.t].splice(f.i,1); (state.terms[nt]=state.terms[nt]||[]).push(c); if(TERMS[TERM_IDX[nt]].st) state.showST[nt]=true; }
     save(); render(); closeDlg();

@@ -13,6 +13,7 @@ A free, single-page 4-year degree planner for NUS students.
 - **Second majors:** Mathematics, Statistics, Quantitative Finance, Economics, Management, Computer Science, Business Analytics, Information Security
 - **Minors (up to two):** Mathematics, Statistics, Economics, Artificial Intelligence, Computer Science, Business Analytics, Information Security, Interactive Media Development
 - Plan Semester 1, Semester 2 and Special Terms for 4 years, and drag courses between terms
+- Mark your current semester (or any course) as in progress, so you can see what you've completed, what you're taking now and what's still planned
 - Tick courses as completed and watch every requirement group fill up: pillars, ID/CD, foundations, breadth & depth, focus areas, level-4000 units, Industry Experience and UE overflow
 - Sharing limits for second majors (16 units) and minors (8 units), plus a warning when a course would be counted three times
 - Live course data from the [NUSMods API](https://api.nusmods.com/v2/): every course code, title and unit value, plus offered semesters and prerequisite warnings
