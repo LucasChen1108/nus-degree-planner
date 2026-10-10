@@ -59,7 +59,7 @@ button{cursor:pointer}
 .top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
 .top p{margin:4px 0 0;color:var(--muted);max-width:62ch}
 .tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.progbar{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;grid-template-columns:1.4fr repeat(4,minmax(0,1fr));gap:12px}
+.progbar{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
 .prog-note{grid-column:1/-1;margin:0;font-size:.8rem;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:8px 10px}
 .linkbtn{background:none;border:0;padding:0;color:var(--navy);font-weight:600;text-decoration:underline;cursor:pointer}
 .progbar label{display:flex;flex-direction:column;gap:4px;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;min-width:0}
@@ -213,6 +213,8 @@ body.is-dragging *{cursor:grabbing!important}
     <label for="sm-sel">Second major<select id="sm-sel"></select></label>
     <label for="mn-sel0">Minor<select id="mn-sel0" class="mn-sel"></select></label>
     <label for="mn-sel1">Second minor<select id="mn-sel1" class="mn-sel"></select></label>
+    <label for="spec-sel" id="spec-wrap">Specialisation<select id="spec-sel"></select></label>
+    <label for="ddp-sel">Double degree<select id="ddp-sel"></select></label>
     <label for="rc-sel">Residential college<select id="rc-sel"></select></label>
     <p class="prog-note" id="prog-note" hidden></p>
   </section>
@@ -285,7 +287,7 @@ const CATMAP = Object.fromEntries(CAT.map(c=>[c[0],{title:c[1],units:c[2]}]));
 const P = window.PROGRAMMES;
 const EXTRA = Object.assign({}, P.SECOND, P.MINORS);
 const TERMS = [];
-for(let y=1;y<=4;y++){ TERMS.push({id:`Y${y}S1`,y,label:"Semester 1"}); TERMS.push({id:`Y${y}S2`,y,label:"Semester 2"}); TERMS.push({id:`Y${y}ST`,y,label:"Special Term",st:true}); }
+for(let y=1;y<=5;y++){ TERMS.push({id:`Y${y}S1`,y,label:"Semester 1"}); TERMS.push({id:`Y${y}S2`,y,label:"Semester 2"}); TERMS.push({id:`Y${y}ST`,y,label:"Special Term",st:true}); }
 const TERM_IDX = Object.fromEntries(TERMS.map((t,i)=>[t.id,i]));
 
 /* ---------- state ---------- */
@@ -349,7 +351,25 @@ function customProgramme(){
     sources:[], groups:[...groups, ...(total>used?[UEgroup(total-used)]:[])]};
 }
 const UEgroup = units => ({k:"ue", name:"Unrestricted Electives", short:"UE", units, ue:true, hint:"Any course, plus overflow from full requirement groups."});
-const extras = ()=> [state.second, ...(state.minors||[])].filter(k=>k && EXTRA[k]);
+const isDesigned = (a,b)=> P.DDP.pairs.some(([x,y])=>(x===a&&y===b)||(x===b&&y===a));
+function ddpProgramme(){
+  const p = P.MAJORS[state.ddp];
+  if(!p || state.ddp===state.major) return null;
+  const mine = new Set(baseMajor().groups.map(g=>g.k));
+  const groups = p.groups.filter(g=>!g.pillar && !g.ue && !(g.cc && mine.has(g.k))).map(g=>Object.assign({}, g, {k:"d_"+g.k}));
+  return {name:p.degree||p.name, kind:"ddp", units:groups.reduce((a,g)=>a+g.units,0), share:P.DDP.share, cohort:p.cohort, sources:[...(p.sources||[]), P.DDP.source],
+    groups, designed:isDesigned(state.major, state.ddp), simplified:p.simplified};
+}
+const curSpec = ()=> { const sp = baseMajor().specs; return state.spec && sp && sp[state.spec] || null; };
+const extras = ()=> {
+  const out = [];
+  const sp = curSpec(); if(sp) out.push({k:"spec", prog:sp});
+  const d = state.ddp && ddpProgramme(); if(d) out.push({k:"ddp", prog:d});
+  [state.second, ...(state.minors||[])].filter(k=>k && EXTRA[k]).forEach(k=>out.push({k, prog:EXTRA[k]}));
+  return out;
+};
+const KIND = {spec:["Specialisation","Spec"], ddp:["Double Degree","DD"], minor:["Minor","Min"], second:["Second Major","2M"]};
+const kindName = p => (KIND[p.kind]||KIND.second)[0], kindBadge = p => (KIND[p.kind]||KIND.second)[1];
 
 /* ---------- matching ---------- */
 const isPh = c => !!phOf(c.code) || !/\d/.test(c.code);
@@ -506,20 +526,20 @@ function runCheck(ch,G,all){
 }
 function extrasEval(majorRes){
   const sharedRank = c => (majorRes.where[c.id] && majorRes.where[c.id]!=="ue") ? 1 : 0;
-  const list = extras().map(k=>({k, prog:EXTRA[k], R:evaluate(EXTRA[k],false,sharedRank)}));
+  const list = extras().map(({k,prog})=>({k, prog, R:evaluate(prog,false,(prog.kind==="spec" && prog.share==null) ? null : sharedRank)}));
   list.forEach(x=>{
     const counted = x.R.gs.flatMap(G=>G.items);
     let shared=0;
     counted.forEach(c=>{
       const inMajor = majorRes.where[c.id] && majorRes.where[c.id]!=="ue";
-      const inOther = list.some(y=>y!==x && y.R.where[c.id]);
+      const inOther = list.some(y=>y!==x && y.prog.kind!=="spec" && y.R.where[c.id]);
       if(inMajor||inOther) shared+=+c.units||0;
     });
     x.shared=shared; x.counted=U(counted); x.distinct=x.counted-shared;
     x.blocked = (x.prog.not||[]).includes(state.major);
   });
   const triple = ordered().map(o=>o.c).filter(c=>{
-    const n = (majorRes.where[c.id] && majorRes.where[c.id]!=="ue" ? 1 : 0) + list.filter(x=>x.R.where[c.id]).length;
+    const n = (majorRes.where[c.id] && majorRes.where[c.id]!=="ue" ? 1 : 0) + list.filter(x=>x.prog.kind!=="spec" && x.R.where[c.id]).length;
     return n>=3;
   });
   list.triple = triple;
@@ -529,6 +549,7 @@ function extrasEval(majorRes){
 /* ---------- starter plan for a major ---------- */
 const unitsOf = code => (CATMAP[code] && CATMAP[code].units) || 4;
 function starterCodes(r){
+  if(r.starter) return r.starter.filter(Boolean);
   const conc = r.any.filter(concrete);
   let phc = null;
   for(const p of r.any){ const m=p.match(/^(GE[CSNX])%$/); if(m){ phc=m[1]; break; } }
@@ -550,17 +571,22 @@ const isUntouchedStarter = () => {
   if(state.starterSig) return termSig(state.terms)===state.starterSig;
   /* plans saved before this check existed: untouched if nothing is ticked and the courses match the major's sample */
   const all = Object.values(state.terms||{}).flat();
-  return all.length>0 && !all.some(c=>c.done) && codeSig(state.terms)===codeSig(starterPlan(state.major).terms);
+  return all.length>0 && !all.some(c=>c.done) && codeSig(state.terms)===codeSig(starterPlan(state.major, state.spec, state.ddp).terms);
 };
 function withStarter(mkey, keep){
-  const p = starterPlan(mkey);
+  const p = starterPlan(mkey, keep && keep.spec, keep && keep.ddp);
   p.starterSig = termSig(p.terms);
   return Object.assign(p, keep||{});
 }
-function starterPlan(mkey){
-  const prog = applyRC(mkey==="custom" ? customProgramme() : (P.MAJORS[mkey]||P.MAJORS.cs), state && state.rc); const codes=[];
+function starterPlan(mkey, specKey, ddpKey){
+  const base = mkey==="custom" ? customProgramme() : (P.MAJORS[mkey]||P.MAJORS.cs);
+  const prog = applyRC(base, state && state.rc); const codes=[];
+  const sp = specKey && base.specs && base.specs[specKey];
+  const dp = ddpKey && ddpKey!==mkey && P.MAJORS[ddpKey];
+  const mine = new Set(base.groups.map(g=>g.k));
+  const extraGroups = [...(sp ? sp.groups : []), ...(dp ? dp.groups.filter(g=>!g.pillar && !g.ue && !(g.cc && mine.has(g.k))) : [])];
   const ieInPool = prog.groups.some(g=>(g.checks||[]).some(ch=>ch.t==="ie"));
-  prog.groups.forEach(g=>{
+  [...prog.groups, ...extraGroups].forEach(g=>{
     (g.reqs||[]).forEach(r=>codes.push(...starterCodes(r)));
     if(g.k==="idcd") codes.push("HS","HS","HS");
   });
@@ -569,14 +595,14 @@ function starterPlan(mkey){
   codes.filter(Boolean).forEach(k=>{ if(phOf(k) || !seen.has(k)){ seen.add(k); list.push(phOf(k)?ph(k):mk(k)); } });
   const ie = list.filter(c=>c.code==="CP3880");
   const rest = list.filter(c=>c.code!=="CP3880").map((c,i)=>({c,i,l:isPh(c)?2.5:level(c)})).sort((a,b)=>(a.l-b.l)||(a.i-b.i)).map(x=>x.c);
-  const terms={}, order=["Y1S1","Y1S2","Y2S1","Y2S2","Y3S1","Y4S1","Y4S2"];
+  const terms={}, order=["Y1S1","Y1S2","Y2S1","Y2S2","Y3S1","Y4S1","Y4S2",...(dp?["Y5S1","Y5S2"]:[])];
   let ti=0;
   rest.forEach(c=>{
     while(ti<order.length-1 && U(terms[order[ti]]||[])+(+c.units||4)>20) ti++;
     (terms[order[ti]]=terms[order[ti]]||[]).push(c);
   });
   if(ie.length) terms.Y3S2 = ie;
-  return {v:2, major:mkey, second:null, minors:[], showST:{}, terms, starter:true};
+  return {v:2, major:mkey, spec:sp?specKey:null, ddp:dp?ddpKey:null, second:null, minors:[], showST:{}, terms, starter:true};
 }
 
 /* ---------- rendering ---------- */
@@ -639,6 +665,15 @@ function render(){
   /* header + pickers */
   $("#deg-line").textContent = `${M.degree} · ${M.cohort} · ${TOTAL} units${state.rc?` · ${P.RCS[state.rc].name}`:""}`;
   $("#rc-sel").value = state.rc||"";
+  const specs = baseMajor().specs || {};
+  $("#spec-wrap").hidden = !Object.keys(specs).length;
+  $("#spec-sel").innerHTML = `<option value="">None yet</option>` + Object.entries(specs).map(([k,p])=>`<option value="${k}">${esc(p.name)}</option>`).join("");
+  $("#spec-sel").value = state.spec||"";
+  const designed = Object.entries(P.MAJORS).filter(([k])=>k!==state.major && isDesigned(state.major,k));
+  const others = Object.entries(P.MAJORS).filter(([k,p])=>k!==state.major && !isDesigned(state.major,k) && p.faculty!==M.faculty);
+  const og = (label,list)=> list.length ? `<optgroup label="${esc(label)}">${list.sort((a,b)=>a[1].name.localeCompare(b[1].name)).map(([k,p])=>`<option value="${k}">${esc(p.degree||p.name)}</option>`).join("")}</optgroup>` : "";
+  $("#ddp-sel").innerHTML = `<option value="">None</option>` + og("Specially designed double degrees", designed) + og("Other combinations (ad hoc, needs approval)", others);
+  $("#ddp-sel").value = state.ddp||"";
   $("#prog-note").innerHTML = M.custom ? `Custom programme. <button type="button" class="linkbtn" id="edit-custom">Edit requirements</button>`
     : M.simplified ? `This major is simplified: its elective rules are matched by course prefix. Check your department's page for the exact course lists.` : "";
   $("#prog-note").hidden = !(M.custom || M.simplified);
@@ -656,7 +691,8 @@ function render(){
   $("#s-dn").style.width = pct(R.dn,TOTAL)+"%";
   $("#s-ip").style.width = pct(R.dn+R.ip,TOTAL)+"%";
   $("#s-pl").style.width = pct(R.pl,TOTAL)+"%";
-  $("#s-ma2").textContent = X.map(x=>`${x.prog.kind==="minor"?"Minor":"Second major"} in ${x.prog.name}: ${x.R.dn}/${x.prog.units} done`).join(" · ");
+  $("#s-ma2").textContent = X.map(x=>`${kindName(x.prog)}: ${x.prog.name} ${x.R.dn}/${x.prog.units} done`).join(" · ")
+    + (state.ddp && X.some(x=>x.prog.kind==="ddp") ? ` · Double degree total: ${raw}/${P.DDP.total} units planned` : "");
 
   /* projected finish */
   const run = {}; let finish=null;
@@ -676,16 +712,17 @@ function render(){
   });
   R.gs.forEach(G=>{ const left=G.g.units-G.pl; if(left>0 && G.slots.every(s=>s.full)) gaps.push(`${G.g.name}: ${left} more units to plan`); });
   X.forEach(x=>{
-    const nm = `${x.prog.kind==="minor"?"Minor":"2nd major"} (${x.prog.name})`;
+    const nm = `${kindName(x.prog)} (${x.prog.name})`;
     if(x.blocked) gaps.push(`${nm} is not open to ${M.name} students`);
     x.R.gs.forEach(G=>{
       G.slots.forEach(s=>{ if(!s.full) gaps.push(`${nm}: ${s.r.label}`); if(!s.doneFull) allDone=false; });
       G.rows.forEach(r=>{ if(!r.pl) gaps.push(`${nm}: ${r.label}`); if(!r.dn) allDone=false; });
       const left=G.g.units-G.pl; if(left>0 && G.slots.every(s=>s.full)) gaps.push(`${nm}: ${left} more units in ${G.g.name}`);
     });
-    if(x.shared>x.prog.share) gaps.push(`${nm} shares ${x.shared} units with other requirements (max ${x.prog.share})`);
+    if(x.prog.share!=null && x.shared>x.prog.share) gaps.push(`${nm} shares ${x.shared} units with other requirements (max ${x.prog.share})`);
     if(x.R.dn<x.prog.units) allDone=false;
   });
+  if(X.some(x=>x.prog.kind==="ddp") && raw<P.DDP.total) gaps.push(`Double degree: plan at least ${P.DDP.total} units in total (${P.DDP.total-raw} more)`);
   if(X.triple && X.triple.length) gaps.push(`Counted three times (not allowed): ${X.triple.map(c=>c.code).join(", ")}. Each course can count toward at most two programmes`);
   const v=$("#verdict");
   if(!gaps.length){
@@ -709,15 +746,18 @@ function render(){
     html += progressHead(G.g.name, G.dnC, G.plC, G.g.units, "", G.ipC) + groupBody(G, inPlan) + `</div>`;
   });
   X.forEach(x=>{
-    const label = `${x.prog.kind==="minor"?"Minor":"Second Major"} · ${x.prog.name}`;
+    const label = `${kindName(x.prog)} · ${x.prog.name}`;
     html += progressHead(label, x.R.dn, x.R.pl, x.prog.units, "extra", x.R.ip);
     if(x.blocked) html += `<div class="sub"><span class="lbl warn-text">Not open to ${esc(M.name)} students.</span></div>`;
     x.R.gs.forEach(G=>{ html += `<div class="eyebrow">${esc(G.g.name)} · ${G.plC}/${G.g.units}</div>` + groupBody(G, inPlan); });
-    const need = x.prog.units - x.prog.share;
-    html += `<div class="sub">
-        <div><span class="lbl">Shared with other requirements (max ${x.prog.share})</span><span class="pill ${x.shared>x.prog.share?"miss":"done"} tnum">${x.shared}u</span></div>
-        <div><span class="lbl">Distinct units (need ${need})</span><span class="pill ${x.distinct>=need?"done":"plan"} tnum">${x.distinct}u</span></div>
-        <div><span class="lbl">${esc(x.prog.cohort)}${x.prog.note?`. ${esc(x.prog.note)}`:""}</span></div></div></div>`;
+    const need = x.prog.units - (x.prog.share||0);
+    const shareRows = x.prog.share==null ? "" : `
+        <div><span class="lbl">${x.prog.kind==="ddp"?"Double counted with your first degree":"Shared with other requirements"} (max ${x.prog.share})</span><span class="pill ${x.shared>x.prog.share?"miss":"done"} tnum">${x.shared}u</span></div>
+        <div><span class="lbl">Distinct units (need ${need})</span><span class="pill ${x.distinct>=need?"done":"plan"} tnum">${x.distinct}u</span></div>`;
+    const ddpNote = x.prog.kind==="ddp" ? (x.prog.designed ? "A specially designed NUS double degree. " : "Not a specially designed combination: an ad hoc double degree needs approval from both faculties. ") + `Most double degrees need at least ${P.DDP.total} units in total; the exact double-counting limit depends on the combination. ` : "";
+    const cohort = x.prog.kind==="spec" ? "Optional specialisation inside your major. " : x.prog.cohort ? x.prog.cohort+". " : "";
+    html += `<div class="sub">${shareRows}
+        <div><span class="lbl">${esc(ddpNote+cohort)}${x.prog.note?esc(x.prog.note):""}</span></div></div></div>`;
   });
   $("#rail").innerHTML = html;
 
@@ -727,11 +767,12 @@ function render(){
 
   /* course badges */
   const gk = Object.fromEntries(M.groups.map(g=>[g.k,g]));
-  const extraBadge = id => X.filter(x=>x.R.where[id]).map(x=>x.prog.kind==="minor"?"Min":"2M");
+  const extraBadge = id => X.filter(x=>x.R.where[id]).map(x=>kindBadge(x.prog));
 
   /* years */
   let yh="";
-  for(let y=1;y<=4;y++){
+  const years = (state.ddp || ["Y5S1","Y5S2","Y5ST"].some(t=>(state.terms[t]||[]).length)) ? 5 : 4;
+  for(let y=1;y<=years;y++){
     const st = `Y${y}ST`;
     const showST = (state.terms[st]||[]).length>0 || state.showST[st];
     yh += `<section aria-label="Year ${y}"><div class="eyebrow" style="margin-bottom:6px">Year ${y}</div><div class="year ${showST?"":"no-st"}">`;
@@ -751,7 +792,7 @@ function render(){
           <span class="grip" data-drag="${c.id}" title="Drag to move" aria-hidden="true">${GRIP}</span>
           <button type="button" class="tick" data-tog="${c.id}" aria-pressed="${c.done}" aria-label="Mark ${esc(c.code)} ${c.done?"not done":"done"}">${c.done?TICK:ip?PROG:""}</button>
           <button type="button" class="c-body" data-edit="${c.id}" aria-label="Edit ${esc(c.code)}"><span class="c-code">${esc(c.code)}${ip?` <span class="prog-tag">In progress</span>`:""}</span><span class="c-title">${esc(c.title||"Tap to add a title")}</span>${(()=>{const w=issues(c,t.id);return w.length?`<span class="c-warn" title="${esc(w.join(". "))}">⚠ ${esc(w[0])}</span>`:"";})()}</button>
-          <span class="c-side"><span class="c-u tnum">${c.units}u</span>${b&&gk[b]?`<span class="bk ${b==="ue"?"ue":""}" title="Counts toward ${esc(gk[b].name)}">${esc(gk[b].short||gk[b].name)}</span>`:""}${extraBadge(c.id).map(t=>`<span class="bk ex" title="Also counts toward your ${t==="2M"?"second major":"minor"}">${t}</span>`).join("")}</span></div>`;
+          <span class="c-side"><span class="c-u tnum">${c.units}u</span>${b&&gk[b]?`<span class="bk ${b==="ue"?"ue":""}" title="Counts toward ${esc(gk[b].name)}">${esc(gk[b].short||gk[b].name)}</span>`:""}${extraBadge(c.id).map(t=>`<span class="bk ex" title="Also counts toward your ${({"2M":"second major","Min":"minor","Spec":"specialisation","DD":"double degree"})[t]}">${t}</span>`).join("")}</span></div>`;
       });
       yh += `</div><form class="adder" data-add="${t.id}"><input id="add-${t.id}" list="catalog" placeholder="Add course code" autocomplete="off" aria-label="Add course to Year ${y} ${t.label}"><button type="submit" aria-label="Add">+</button></form></div>`;
     });
@@ -960,15 +1001,29 @@ function fillPickers(){
 $("#maj-sel").onchange=e=>{
   if(e.target.value==="custom"){ state.major="custom"; if(!state.custom) state.custom={name:"",units:160,text:""}; save(); render(); customDialog(); return; }
   if(isUntouchedStarter()){
-    const keep={second:state.second, minors:state.minors, rc:state.rc, custom:state.custom};
+    const sp = P.MAJORS[e.target.value] && P.MAJORS[e.target.value].specs || {};
+    const keep={second:state.second, minors:state.minors, rc:state.rc, custom:state.custom, spec:sp[state.spec]?state.spec:null, ddp:state.ddp!==e.target.value?state.ddp:null};
     state = withStarter(e.target.value, keep);
   }
   state.major=e.target.value;
+  if(state.spec && !((P.MAJORS[state.major]||{}).specs||{})[state.spec]) state.spec=null;
+  if(state.ddp===state.major) state.ddp=null;
   const bad=[state.second,...(state.minors||[])].filter(k=>k && (EXTRA[k].not||[]).includes(state.major));
   if(bad.length){ state.second = bad.includes(state.second)?null:state.second; state.minors=(state.minors||[]).filter(k=>!bad.includes(k)); }
   save(); render();
   toast(`Switched to ${major().name}${state.starterSig && isUntouchedStarter()?", with its sample plan":""}${bad.length?". Removed a programme not open to this major":""}`);
 };
+function switchExtra(field, value, msg){
+  const untouched = isUntouchedStarter();
+  state[field] = value||null;
+  if(untouched){
+    const keep={second:state.second, minors:state.minors, rc:state.rc, custom:state.custom, spec:state.spec, ddp:state.ddp, current:state.current};
+    state = withStarter(state.major, keep);
+  }
+  save(); render(); toast((typeof msg==="function"?msg():msg) + (untouched ? ". Sample plan updated" : ""));
+}
+$("#spec-sel").onchange=e=>switchExtra("spec", e.target.value, ()=> curSpec() ? `Specialisation: ${curSpec().name}` : "No specialisation: general sample plan");
+$("#ddp-sel").onchange=e=>switchExtra("ddp", e.target.value, e.target.value ? `Double degree with ${P.MAJORS[e.target.value].degree||P.MAJORS[e.target.value].name} added. Year 5 is now shown` : "Double degree removed");
 $("#rc-sel").onchange=e=>{ state.rc=e.target.value||""; save(); render(); toast(state.rc ? `${P.RCS[state.rc].name} courses now count toward the requirements they replace` : "Residential college removed"); };
 document.addEventListener("click", e=>{ if(e.target.id==="edit-custom") customDialog(); });
 function customDialog(){
@@ -1016,7 +1071,7 @@ $("#btn-reset").onclick=()=>{
     <div class="dlg-f"><button type="button" class="btn" id="r-cancel">Cancel</button><div><button type="button" class="btn" id="r-clear">Start empty</button><button type="button" class="btn primary" id="r-sample">Load sample plan</button></div></div>`);
   $("#r-cancel").onclick=closeDlg;
   $("#r-clear").onclick=()=>{ state={v:2,major:state.major,second:state.second,minors:state.minors||[],rc:state.rc,custom:state.custom,showST:{},terms:{}}; save(); render(); closeDlg(); toast("Planner cleared"); };
-  $("#r-sample").onclick=()=>{ state=withStarter(state.major,{second:state.second,minors:state.minors,rc:state.rc,custom:state.custom}); save(); render(); closeDlg(); toast("Sample plan loaded. Switch major above to see another major's sample"); };
+  $("#r-sample").onclick=()=>{ state=withStarter(state.major,{second:state.second,minors:state.minors,rc:state.rc,custom:state.custom,spec:state.spec,ddp:state.ddp}); save(); render(); closeDlg(); toast("Sample plan loaded. Switch major above to see another major's sample"); };
 };
 $("#btn-io").onclick=()=>{
   openDlg(`<h2>Export / Import</h2><label>Your plan as text. Copy it to back up, or paste a saved plan and press Import.<textarea id="io-t">${esc(JSON.stringify(state))}</textarea></label>
@@ -1041,6 +1096,8 @@ function normalize(s){
   if(s.second==="math") s.second="ma2";
   if(s.second && !P.SECOND[s.second]) s.second=null;
   s.minors=(s.minors||[]).filter(k=>P.MINORS[k]);
+  if(s.spec && !(((P.MAJORS[s.major]||{}).specs||{})[s.spec])) s.spec=null;
+  if(s.ddp && (!P.MAJORS[s.ddp] || s.ddp===s.major)) s.ddp=null;
   for(const t in s.terms){ if(!TERM_IDX.hasOwnProperty(t)) delete s.terms[t]; else s.terms[t]=s.terms[t].filter(Boolean).map(c=>Object.assign({id:uid(),code:"",title:"",units:4,done:false,bucket:"auto",tag:""},c)); }
   return s;
 }

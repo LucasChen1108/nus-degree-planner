@@ -2,7 +2,7 @@
 
 A free, single-page 4-year degree planner for NUS students.
 
-- **54 majors across 5 faculties:**
+- **55 majors across 5 faculties:**
   - **Computing:** Computer Science, Artificial Intelligence, Business Analytics, Business AI Systems, Information Security
   - **Science (CHS):** Chemistry, Life Sciences, Mathematics, Physics, Statistics, Data Science & Analytics, Quantitative Finance, Food Science & Technology, Pharmaceutical Science, Data Science & Economics
   - **Arts & Social Sciences (CHS):** Economics, Psychology, Political Science, History, Philosophy, Sociology, Anthropology, Chinese Language, Chinese Studies, Communications & New Media, English Language & Linguistics, English Literature, Geography, Global Studies, Japanese Studies, Malay Studies, Social Work, South Asian Studies, Southeast Asian Studies, Theatre & Performance Studies
@@ -12,7 +12,9 @@ A free, single-page 4-year degree planner for NUS students.
 - **Residential colleges:** UTCP (Tembusu, CAPT, RC4, Acacia), Ridge View and NUS College courses count toward the requirements they replace for your faculty
 - **Second majors:** Mathematics, Statistics, Quantitative Finance, Economics, Management, Computer Science, Business Analytics, Information Security
 - **Minors (up to two):** Mathematics, Statistics, Economics, Artificial Intelligence, Computer Science, Business Analytics, Information Security, Interactive Media Development
-- Plan Semester 1, Semester 2 and Special Terms for 4 years, and drag courses between terms
+- **Specialisations:** CS focus areas, Business Analytics, Business AI Systems, Mathematics, Life Sciences, Economics and Electrical Engineering specialisations, each with its own sample plan (choose "No specialisation" for the general sample plan)
+- **Double degrees:** the specially designed NUS double degrees plus ad hoc combinations. Adds the second degree's requirements, a 5th year and the 200-unit / 32-unit double-counting checks
+- Plan Semester 1, Semester 2 and Special Terms for 4 years (5 for a double degree), and drag courses between terms
 - Mark your current semester (or any course) as in progress, so you can see what you've completed, what you're taking now and what's still planned
 - Tick courses as completed and watch every requirement group fill up: pillars, ID/CD, foundations, breadth & depth, focus areas, level-4000 units, Industry Experience and UE overflow
 - Sharing limits for second majors (16 units) and minors (8 units), plus a warning when a course would be counted three times

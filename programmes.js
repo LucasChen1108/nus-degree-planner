@@ -793,6 +793,78 @@ const MINORS = {
   }
 };
 
+
+/* =====================================================================
+ * Specialisations (optional, inside the major). share:null = may fully overlap the major.
+ * ===================================================================== */
+const spec = (name, src, groups, extra) => Object.assign({name, kind:"spec", units:groups.reduce((a,g)=>a+g.units,0), share:null, sources:[src], groups}, extra||{});
+const pick5 = (label, list) => [{k:"all", name:"Requirements", units:20, reqs:[{label, any:list, pick:5}]}];
+const BZA_SRC = {label:"BZA specialisations", url:SOC+"ba/ba-25-26"}, BAIS_SRC = {label:"BAIS specialisations", url:SOC+"bais/bais-25-26"};
+const SPECS = {
+  cs: Object.fromEntries(Object.entries(CS_FOCUS).map(([n,list])=>[n.toLowerCase().replace(/[^a-z]+/g,"-"),
+    spec(`${n} (focus area)`, {label:"CS focus areas", url:"https://www.comp.nus.edu.sg/programmes/ug/focus/"},
+      [{k:"all", name:"Focus area primaries", units:12, reqs:[{label:`3 ${n} primaries, at least one at level 4000`, any:list.filter(c=>c!=="CS2103"), pick:3,
+        starter:[...list.filter(c=>c!=="CS2103"&&!/^CS4/.test(c)).slice(0,2), list.find(c=>/^CS4/.test(c))]}],
+        checks:[{t:"minCount", label:"At least one at level 4000", any:["@4+"], n:1}]}])])),
+  bza: {
+    fin: spec("Financial Analytics", BZA_SRC, pick5("5 courses from the Financial Analytics list", ["BT3102","BT4012","BT4013","BT4016","BT4221","IS4226","IS4228","IS4234","IS4302","IS4303"])),
+    ml:  spec("Machine Learning-based Analytics", BZA_SRC, pick5("5 courses from the ML-based Analytics list", ["BT3017","BT4012","BT4014","BT4221","BT4222","BT4240","BT4241","BT4301","CS3243","CS4248","IS4246"])),
+    mkt: spec("Marketing Analytics", BZA_SRC, pick5("5 courses from the Marketing Analytics list", ["BT3017","BT4014","BT4015","BT4211","BT4212","BT4222","IS3150","IS4241","IS4262"]))},
+  bais: {
+    aig: spec("AI Governance and Management", BAIS_SRC, pick5("5 courses from the AI Governance list", ["IS4233","IS4234","IS4236","IS4238","IS4243","IS4246","IS4400"])),
+    dpp: spec("Digital Product and Platform Management", BAIS_SRC, pick5("5 courses from the Digital Product list", ["IS3150","IS3240","IS4233","IS4236","IS4241","IS4243","IS4250","IS4261","IS4262"])),
+    fin: spec("Financial Technology", BAIS_SRC, pick5("5 courses from the FinTech list", ["BT4014","IS3107","IS4226","IS4228","IS4234","IS4246","IS4302","IS4303"]))},
+  math: {
+    pm: spec("Pure Mathematics", {label:"Dept of Mathematics", url:"https://www.math.nus.edu.sg/wp-content/uploads/sites/4/2026/09/MA_PM_2122_03092026.pdf"},
+      pick5("5 courses from List PM", ["MA4203","MA4207","MA4211","MA4221","MA4233","MA4235","MA4262","MA4263","MA4266","MA4271","MA4273","MA4276","MA4288P"]),
+      {share:0, note:"These 5 courses are on top of the major: they can't also count toward its level 2000/3000 requirements."}),
+    orda: spec("Operations Research & Data Analytics", {label:"Dept of Mathematics", url:"https://www.math.nus.edu.sg/wp-content/uploads/sites/4/2026/06/MA_ORDA_2122_15062026.pdf"},
+      pick5("5 courses from List ORDA", ["MA4229","MA4230","MA4235","MA4251","ST4238","MA4254","MA4255","MA4260","MA4261","MA4264","MA4268","MA4270","MA4275","MA4288O","QF4103","DSA4212"]),
+      {share:0, note:"These 5 courses are on top of the major: they can't also count toward its level 2000/3000 requirements."})},
+  lsm: {
+    bms: spec("Biomedical Science", {label:"Dept of Biological Sciences", url:"https://www.dbs.nus.edu.sg/wp-content/uploads/sites/7/2024/07/lifesciencesAY2122.pdf"},
+      [{k:"all", name:"Requirements", units:20, reqs:[{label:"LSM4288M Research Project (8u)", any:["LSM4288M"]},
+        {label:"3 Biomedical Science electives (LSM32xx / 42xx)", any:["LSM3210A","LSM3210B","LSM3211","LSM3212","LSM3214","LSM3215","LSM3216","LSM3217","LSM3218","LSM3219","LSM3220","LSM3222","LSM3223","LSM3225","LSM3226","LSM3227","LSM3228","LSM3231","LSM3232","LSM3233","LSM3234","LSM3235","LSM3236","LSM3241","LSM3242","LSM3243","LSM3244","LSM3245","LSM3246","LSM3247","LSM4210","LSM4211","LSM4213","LSM4214","LSM4215","LSM4216","LSM4217","LSM4218","LSM4219","LSM4220","LSM4221","LSM4222","LSM4223","LSM4225","LSM4226","LSM4227","LSM4228","LSM4229","LSM4231","LSM4232","LSM4234","LSM4236","LSM4237","LSM4241","LSM4242","LSM4243","LSM4245","LSM4252"], pick:3}]}]),
+    eeb: spec("Ecology, Evolution and Biodiversity", {label:"Dept of Biological Sciences", url:"https://www.dbs.nus.edu.sg/wp-content/uploads/sites/7/2024/07/lifesciencesAY2122.pdf"},
+      [{k:"all", name:"Requirements", units:20, reqs:[{label:"LSM4288E Research Project (8u)", any:["LSM4288E"]},
+        {label:"3 EEB electives (LSM32xx / 42xx)", any:["LSM3233","LSM3252","LSM3254","LSM3255","LSM3256","LSM3257","LSM3258","LSM3259","LSM3260","LSM3265","LSM3266","LSM3267","LSM3272","LSM3275","LSM4251","LSM4254","LSM4255","LSM4256","LSM4257","LSM4258","LSM4259","LSM4260","LSM4261","LSM4262","LSM4263","LSM4264","LSM4267","LSM4268","LSM4269","LSM4270"], pick:3}]}])},
+  econ: {
+    qe: spec("Quantitative Economics", {label:"Dept of Economics", url:"https://fass.nus.edu.sg/ecs/students-matriculated-in-academic-year-2021-22-and-onwards-specialisations/"},
+      [{k:"all", name:"Requirements", units:20, reqs:[{label:"EC3312 / EC3314 / EC3304", any:["EC3312","EC3314","EC3304"]},{label:"EC4301", any:["EC4301"]},{label:"EC4302", any:["EC4302"]},
+        {label:"2 of EC4303 / 4304 / 4308 / 4312 / 4313 / 4501 / EC5104 / FE5213", any:["EC4303","EC4304","EC4308","EC4312","EC4313","EC4501","EC5104","FE5213"], pick:2}]}]),
+    mfe: spec("Monetary and Financial Economics", {label:"Dept of Economics", url:"https://fass.nus.edu.sg/ecs/students-matriculated-in-academic-year-2021-22-and-onwards-specialisations/"},
+      [{k:"all", name:"Requirements", units:20, reqs:[{label:"EC3332", any:["EC3332"]},{label:"EC3333", any:["EC3333"]},{label:"EC3343", any:["EC3343"]},
+        {label:"2 of EC4302 / 4307 / 4331 / 4332 / 4333 / 4334 / 4343 / FE5213", any:["EC4302","EC4307","EC4331","EC4332","EC4333","EC4334","EC4343","FE5213"], pick:2}]}]),
+    ape: spec("Applied and Policy Economics", {label:"Dept of Economics", url:"https://fass.nus.edu.sg/ecs/students-matriculated-in-academic-year-2021-22-and-onwards-specialisations/"},
+      [{k:"all", name:"Requirements", units:20, reqs:[{label:"1 of EC3322 / 3351 / 3342 / 3361 / 3381 / 3396", any:["EC3322","EC3351","EC3342","EC3361","EC3381","EC3396"]},
+        {label:"EC4305 or EC5326", any:["EC4305","EC5326"]},
+        {label:"3 level-4000 applied/policy courses", any:["EC4324","EC4325","EC4351","EC4352","EC4353","EC4354","EC4355","EC4342","EC4361","EC4362","EC4371","EC4372","EC4382","EC4383","EC4387","EC4391","EC4398","EC4399"], pick:3}]}])},
+  ee: {
+    rob: spec("Robotics", {label:"ECE specialisations", url:"https://cde.nus.edu.sg/ece/undergraduate/electrical-engineering/specialisations-and-minor/robotics"},
+      [{k:"all", name:"Requirements", units:20, reqs:[{label:"20 units of Robotics electives (or 12 + robotics capstone EE4002D/R)",
+        any:["EE4002D","EE4002R","BN4203","BN4207","BN4601","EE3305","ME3243","EE4115","EE4305","EE4308","EE4309","EE4311","EE4312","EE4314","EE4705","ME2143","ME4242","ME4245","ME5406","MLE4228","RB4301"], units:20}]}]),
+    iot: spec("Internet of Things", {label:"ECE specialisations", url:"https://cde.nus.edu.sg/ece/undergraduate/electrical-engineering/specialisations-and-minor/internet-of-things-iot/"},
+      [{k:"all", name:"Requirements", units:20, reqs:[{label:"CS3237 Intro to IoT", any:["CS3237"]},{label:"EE4211 Data Science for IoT", any:["EE4211"]},{label:"EE4409 Modern Microelectronic Devices & Sensors", any:["EE4409"]},
+        {label:"8 units of IoT electives", any:["CS4222","EE4204","EE4216","EE4218","CS3244","EE4002D","EE4002R","CP4106","CG4002"], units:8}]}]),
+    ae: spec("Advanced Electronics", {label:"ECE specialisations", url:"https://cde.nus.edu.sg/ece/undergraduate/electrical-engineering/specialisations-and-minor/specialisation-in-advanced-electronics-ae/"},
+      [{k:"all", name:"Requirements", units:20, reqs:[{label:"EE3408C Integrated Analog Design", any:["EE3408C"]},{label:"EE3431C Microelectronic Materials and Devices", any:["EE3431C"]},
+        {label:"12 units of Advanced Electronics electives", any:["EE4101","EE4218","EE4407","EE4415","EE5507","CG3207","EE4409","EE4435","EE4436","EE4437","EE4438"], units:12}]}])}
+};
+Object.entries(SPECS).forEach(([m,sp])=>{ if(MAJORS[m]) MAJORS[m].specs = sp; });
+
+/* =====================================================================
+ * Double degree programmes: your major + the programme requirements of a second degree.
+ * Specially designed combinations (NUS Bulletin AY2025/26) are listed first in the picker.
+ * ===================================================================== */
+const BBA_KEYS = ["bfin","bmkt","bhcm","bops","bban","becn","binn","acc","re"];
+const ENG_KEYS = ["bme","me","ese","mse","ise","ee","ceg","esp","chbe","cve","rmi"];
+const DDP_PAIRS = [
+  ...BBA_KEYS.flatMap(b=>[[b,"bza"],[b,"cnm"],[b,"cs"],[b,"bais"],[b,"econ"],...ENG_KEYS.map(e=>[b,e])]),
+  ["cs","math"],["econ","bza"],["econ","bais"],...ENG_KEYS.map(e=>["econ",e])
+];
+const DDP = {total:200, share:32, pairs:DDP_PAIRS,
+  source:{label:"NUS Bulletin: Double Degree Programmes", url:"https://www.nus.edu.sg/nusbulletin/ay202526/programmes/double-degree-programmes/"}};
+
 /* faculties for the pickers */
 const FAC = {ma2:"Science",st2:"Science",qf2:"Science",ec2:"Arts & Social Sciences",mgt2:"Business",cs2:"Computing",ba2:"Computing",isc2:"Computing",
   mamin:"Science",stmin:"Science",ecmin:"Arts & Social Sciences",aimin:"Computing",csmin:"Computing",bamin:"Computing",iscmin:"Computing",imdmin:"Arts & Social Sciences"};
@@ -822,5 +894,5 @@ MINORS.mgtmin = {name:"Management", kind:"minor", units:20, share:8, cohort:"Non
   note:"Simplified: business-coded courses count. Check the official list.",
   groups:[{k:"all", name:"Requirements", units:20, pool:["ACC%","BSP%","DAO%","FIN%","MKT%","MNO%","BSN%","BSE%","RE%"]}]};
 
-window.PROGRAMMES = { MAJORS, SECOND, MINORS, RCS, NUSC };
+window.PROGRAMMES = { MAJORS, SECOND, MINORS, RCS, NUSC, DDP };
 })();
