@@ -65,6 +65,16 @@ button{cursor:pointer}
 .progbar label{display:flex;flex-direction:column;gap:4px;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;min-width:0}
 .progbar select{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 9px;color:var(--ink);font-size:.9rem;text-transform:none;letter-spacing:0;font-weight:500;width:100%}
 .progbar label.major select{border-color:var(--accent)}
+.progbar .lbl-like{display:flex;flex-direction:column;gap:4px;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;min-width:0;position:relative}
+.multi summary{list-style:none;cursor:pointer;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 26px 7px 9px;color:var(--ink);font-size:.9rem;text-transform:none;letter-spacing:0;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative}
+.multi summary::-webkit-details-marker{display:none}
+.multi summary::after{content:"";position:absolute;right:11px;top:50%;width:6px;height:6px;border:solid var(--ink);border-width:0 1.5px 1.5px 0;transform:translateY(-70%) rotate(45deg)}
+.multi[open] summary{border-color:var(--accent)}
+.multi-pop{position:absolute;z-index:30;left:0;right:0;min-width:240px;margin-top:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.14);padding:6px;max-height:320px;overflow:auto;text-transform:none;letter-spacing:0}
+.multi-pop label.opt{flex-direction:row;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;font-size:.88rem;font-weight:500;color:var(--ink);text-transform:none;letter-spacing:0;cursor:pointer}
+.multi-pop label.opt:hover{background:var(--bg)}
+.multi-pop input{accent-color:var(--accent);width:16px;height:16px;flex:none}
+.multi-pop .hint{font-size:.75rem;color:var(--muted);font-weight:400;padding:4px 8px 6px;text-transform:none;letter-spacing:0}
 .req.extra{border-color:var(--navy)}
 .bk.ex{background:var(--navy-soft);color:var(--navy)}
 .warn-text{color:var(--bad);font-weight:600}
@@ -213,7 +223,9 @@ body.is-dragging *{cursor:grabbing!important}
     <label for="sm-sel">Second major<select id="sm-sel"></select></label>
     <label for="mn-sel0">Minor<select id="mn-sel0" class="mn-sel"></select></label>
     <label for="mn-sel1">Second minor<select id="mn-sel1" class="mn-sel"></select></label>
-    <label for="spec-sel" id="spec-wrap">Specialisation<select id="spec-sel"></select></label>
+    <label for="mn-sel2">Third minor<select id="mn-sel2" class="mn-sel"></select></label>
+    <div class="lbl-like" id="spec-wrap"><span id="spec-lbl">Specialisations</span>
+      <details class="multi" id="spec-dd"><summary id="spec-sum" aria-labelledby="spec-lbl spec-sum">None yet</summary><div class="multi-pop" id="spec-list" role="group" aria-label="Specialisations"></div></details></div>
     <label for="ddp-sel">Double degree<select id="ddp-sel"></select></label>
     <label for="rc-sel">Residential college<select id="rc-sel"></select></label>
     <p class="prog-note" id="prog-note" hidden></p>
@@ -360,10 +372,10 @@ function ddpProgramme(){
   return {name:p.degree||p.name, kind:"ddp", units:groups.reduce((a,g)=>a+g.units,0), share:P.DDP.share, cohort:p.cohort, sources:[...(p.sources||[]), P.DDP.source],
     groups, designed:isDesigned(state.major, state.ddp), simplified:p.simplified};
 }
-const curSpec = ()=> { const sp = baseMajor().specs; return state.spec && sp && sp[state.spec] || null; };
+const curSpecs = ()=> { const sp = baseMajor().specs || {}; return (state.specs||[]).filter(k=>sp[k]).map(k=>({k, prog:sp[k]})); };
 const extras = ()=> {
   const out = [];
-  const sp = curSpec(); if(sp) out.push({k:"spec", prog:sp});
+  curSpecs().forEach(({k,prog})=>out.push({k:"spec:"+k, prog}));
   const d = state.ddp && ddpProgramme(); if(d) out.push({k:"ddp", prog:d});
   [state.second, ...(state.minors||[])].filter(k=>k && EXTRA[k]).forEach(k=>out.push({k, prog:EXTRA[k]}));
   return out;
@@ -571,20 +583,20 @@ const isUntouchedStarter = () => {
   if(state.starterSig) return termSig(state.terms)===state.starterSig;
   /* plans saved before this check existed: untouched if nothing is ticked and the courses match the major's sample */
   const all = Object.values(state.terms||{}).flat();
-  return all.length>0 && !all.some(c=>c.done) && codeSig(state.terms)===codeSig(starterPlan(state.major, state.spec, state.ddp).terms);
+  return all.length>0 && !all.some(c=>c.done) && codeSig(state.terms)===codeSig(starterPlan(state.major, state.specs, state.ddp).terms);
 };
 function withStarter(mkey, keep){
-  const p = starterPlan(mkey, keep && keep.spec, keep && keep.ddp);
+  const p = starterPlan(mkey, keep && keep.specs, keep && keep.ddp);
   p.starterSig = termSig(p.terms);
   return Object.assign(p, keep||{});
 }
-function starterPlan(mkey, specKey, ddpKey){
+function starterPlan(mkey, specKeys, ddpKey){
   const base = mkey==="custom" ? customProgramme() : (P.MAJORS[mkey]||P.MAJORS.cs);
   const prog = applyRC(base, state && state.rc); const codes=[];
-  const sp = specKey && base.specs && base.specs[specKey];
+  const spKeys = [].concat(specKeys||[]).filter(k=>base.specs && base.specs[k]);
   const dp = ddpKey && ddpKey!==mkey && P.MAJORS[ddpKey];
   const mine = new Set(base.groups.map(g=>g.k));
-  const extraGroups = [...(sp ? sp.groups : []), ...(dp ? dp.groups.filter(g=>!g.pillar && !g.ue && !(g.cc && mine.has(g.k))) : [])];
+  const extraGroups = [...spKeys.flatMap(k=>base.specs[k].groups), ...(dp ? dp.groups.filter(g=>!g.pillar && !g.ue && !(g.cc && mine.has(g.k))) : [])];
   const ieInPool = prog.groups.some(g=>(g.checks||[]).some(ch=>ch.t==="ie"));
   [...prog.groups, ...extraGroups].forEach(g=>{
     (g.reqs||[]).forEach(r=>codes.push(...starterCodes(r)));
@@ -602,7 +614,7 @@ function starterPlan(mkey, specKey, ddpKey){
     (terms[order[ti]]=terms[order[ti]]||[]).push(c);
   });
   if(ie.length) terms.Y3S2 = ie;
-  return {v:2, major:mkey, spec:sp?specKey:null, ddp:dp?ddpKey:null, second:null, minors:[], showST:{}, terms, starter:true};
+  return {v:2, major:mkey, specs:spKeys, ddp:dp?ddpKey:null, second:null, minors:[], showST:{}, terms, starter:true};
 }
 
 /* ---------- rendering ---------- */
@@ -667,8 +679,12 @@ function render(){
   $("#rc-sel").value = state.rc||"";
   const specs = baseMajor().specs || {};
   $("#spec-wrap").hidden = !Object.keys(specs).length;
-  $("#spec-sel").innerHTML = `<option value="">None yet</option>` + Object.entries(specs).map(([k,p])=>`<option value="${k}">${esc(p.name)}</option>`).join("");
-  $("#spec-sel").value = state.spec||"";
+  const chosen = new Set(state.specs||[]);
+  $("#spec-list").innerHTML = `<div class="hint">Pick as many as you plan to do. Leave all unticked for the general sample plan.</div>` +
+    Object.entries(specs).map(([k,p])=>`<label class="opt"><input type="checkbox" value="${k}"${chosen.has(k)?" checked":""}>${esc(p.name)}</label>`).join("");
+  const names = curSpecs().map(x=>x.prog.name.replace(/ \(focus area\)$/,""));
+  $("#spec-sum").textContent = !names.length ? "None yet" : names.length===1 ? names[0] : `${names.length} selected: ${names.join(", ")}`;
+  $("#spec-sum").title = names.join(", ");
   const designed = Object.entries(P.MAJORS).filter(([k])=>k!==state.major && isDesigned(state.major,k));
   const others = Object.entries(P.MAJORS).filter(([k,p])=>k!==state.major && !isDesigned(state.major,k) && p.faculty!==M.faculty);
   const og = (label,list)=> list.length ? `<optgroup label="${esc(label)}">${list.sort((a,b)=>a[1].name.localeCompare(b[1].name)).map(([k,p])=>`<option value="${k}">${esc(p.degree||p.name)}</option>`).join("")}</optgroup>` : "";
@@ -679,7 +695,7 @@ function render(){
   $("#prog-note").hidden = !(M.custom || M.simplified);
   $("#maj-sel").value = state.major;
   $("#sm-sel").value = state.second||"";
-  [0,1].forEach(i=>{ $("#mn-sel"+i).value = (state.minors||[])[i]||""; });
+  [0,1,2].forEach(i=>{ $("#mn-sel"+i).value = (state.minors||[])[i]||""; });
   document.querySelectorAll("#sm-sel option, .mn-sel option").forEach(o=>{
     const p = EXTRA[o.value]; o.disabled = !!(p && (p.not||[]).includes(state.major));
   });
@@ -1002,11 +1018,11 @@ $("#maj-sel").onchange=e=>{
   if(e.target.value==="custom"){ state.major="custom"; if(!state.custom) state.custom={name:"",units:160,text:""}; save(); render(); customDialog(); return; }
   if(isUntouchedStarter()){
     const sp = P.MAJORS[e.target.value] && P.MAJORS[e.target.value].specs || {};
-    const keep={second:state.second, minors:state.minors, rc:state.rc, custom:state.custom, spec:sp[state.spec]?state.spec:null, ddp:state.ddp!==e.target.value?state.ddp:null};
+    const keep={second:state.second, minors:state.minors, rc:state.rc, custom:state.custom, specs:(state.specs||[]).filter(k=>sp[k]), ddp:state.ddp!==e.target.value?state.ddp:null};
     state = withStarter(e.target.value, keep);
   }
   state.major=e.target.value;
-  if(state.spec && !((P.MAJORS[state.major]||{}).specs||{})[state.spec]) state.spec=null;
+  { const sp=(P.MAJORS[state.major]||{}).specs||{}; state.specs=(state.specs||[]).filter(k=>sp[k]); }
   if(state.ddp===state.major) state.ddp=null;
   const bad=[state.second,...(state.minors||[])].filter(k=>k && (EXTRA[k].not||[]).includes(state.major));
   if(bad.length){ state.second = bad.includes(state.second)?null:state.second; state.minors=(state.minors||[]).filter(k=>!bad.includes(k)); }
@@ -1015,14 +1031,22 @@ $("#maj-sel").onchange=e=>{
 };
 function switchExtra(field, value, msg){
   const untouched = isUntouchedStarter();
-  state[field] = value||null;
+  state[field] = Array.isArray(value) ? value : (value||null);
   if(untouched){
-    const keep={second:state.second, minors:state.minors, rc:state.rc, custom:state.custom, spec:state.spec, ddp:state.ddp, current:state.current};
+    const keep={second:state.second, minors:state.minors, rc:state.rc, custom:state.custom, specs:state.specs, ddp:state.ddp, current:state.current};
     state = withStarter(state.major, keep);
   }
   save(); render(); toast((typeof msg==="function"?msg():msg) + (untouched ? ". Sample plan updated" : ""));
 }
-$("#spec-sel").onchange=e=>switchExtra("spec", e.target.value, ()=> curSpec() ? `Specialisation: ${curSpec().name}` : "No specialisation: general sample plan");
+$("#spec-list").addEventListener("change", e=>{
+  if(!e.target.matches("input[type=checkbox]")) return;
+  const k=e.target.value, on=e.target.checked, name=(baseMajor().specs||{})[k].name;
+  const next=(state.specs||[]).filter(x=>x!==k); if(on) next.push(k);
+  switchExtra("specs", next, ()=> on ? `Specialisation added: ${name}` : curSpecs().length ? `Specialisation removed: ${name}` : "No specialisation: general sample plan");
+  $("#spec-dd").open = true;
+});
+document.addEventListener("click", e=>{ const d=$("#spec-dd"); if(d.open && !d.contains(e.target)) d.open=false; });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") $("#spec-dd").open=false; });
 $("#ddp-sel").onchange=e=>switchExtra("ddp", e.target.value, e.target.value ? `Double degree with ${P.MAJORS[e.target.value].degree||P.MAJORS[e.target.value].name} added. Year 5 is now shown` : "Double degree removed");
 $("#rc-sel").onchange=e=>{ state.rc=e.target.value||""; save(); render(); toast(state.rc ? `${P.RCS[state.rc].name} courses now count toward the requirements they replace` : "Residential college removed"); };
 document.addEventListener("click", e=>{ if(e.target.id==="edit-custom") customDialog(); });
@@ -1070,8 +1094,8 @@ $("#btn-reset").onclick=()=>{
   openDlg(`<h2>Reset the planner</h2><p style="margin:0;color:var(--muted)">This replaces everything on the page. Export first if you want a copy. The sample plan places every required course for ${esc(major().name)} across 4 years; you add your electives.</p>
     <div class="dlg-f"><button type="button" class="btn" id="r-cancel">Cancel</button><div><button type="button" class="btn" id="r-clear">Start empty</button><button type="button" class="btn primary" id="r-sample">Load sample plan</button></div></div>`);
   $("#r-cancel").onclick=closeDlg;
-  $("#r-clear").onclick=()=>{ state={v:2,major:state.major,second:state.second,minors:state.minors||[],rc:state.rc,custom:state.custom,showST:{},terms:{}}; save(); render(); closeDlg(); toast("Planner cleared"); };
-  $("#r-sample").onclick=()=>{ state=withStarter(state.major,{second:state.second,minors:state.minors,rc:state.rc,custom:state.custom,spec:state.spec,ddp:state.ddp}); save(); render(); closeDlg(); toast("Sample plan loaded. Switch major above to see another major's sample"); };
+  $("#r-clear").onclick=()=>{ state={v:2,major:state.major,second:state.second,minors:state.minors||[],specs:state.specs||[],rc:state.rc,custom:state.custom,showST:{},terms:{}}; save(); render(); closeDlg(); toast("Planner cleared"); };
+  $("#r-sample").onclick=()=>{ state=withStarter(state.major,{second:state.second,minors:state.minors,rc:state.rc,custom:state.custom,specs:state.specs,ddp:state.ddp}); save(); render(); closeDlg(); toast("Sample plan loaded. Switch major above to see another major's sample"); };
 };
 $("#btn-io").onclick=()=>{
   openDlg(`<h2>Export / Import</h2><label>Your plan as text. Copy it to back up, or paste a saved plan and press Import.<textarea id="io-t">${esc(JSON.stringify(state))}</textarea></label>
@@ -1096,7 +1120,8 @@ function normalize(s){
   if(s.second==="math") s.second="ma2";
   if(s.second && !P.SECOND[s.second]) s.second=null;
   s.minors=(s.minors||[]).filter(k=>P.MINORS[k]);
-  if(s.spec && !(((P.MAJORS[s.major]||{}).specs||{})[s.spec])) s.spec=null;
+  if(s.spec && !s.specs) s.specs=[s.spec]; delete s.spec;
+  { const sp=(P.MAJORS[s.major]||{}).specs||{}; s.specs=[...new Set(s.specs||[])].filter(k=>sp[k]); }
   if(s.ddp && (!P.MAJORS[s.ddp] || s.ddp===s.major)) s.ddp=null;
   for(const t in s.terms){ if(!TERM_IDX.hasOwnProperty(t)) delete s.terms[t]; else s.terms[t]=s.terms[t].filter(Boolean).map(c=>Object.assign({id:uid(),code:"",title:"",units:4,done:false,bucket:"auto",tag:""},c)); }
   return s;

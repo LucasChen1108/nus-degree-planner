@@ -11,8 +11,8 @@ A free, single-page 4-year degree planner for NUS students.
   - **Any other programme:** enter your own requirement groups with the Custom programme option
 - **Residential colleges:** UTCP (Tembusu, CAPT, RC4, Acacia), Ridge View and NUS College courses count toward the requirements they replace for your faculty
 - **Second majors:** Mathematics, Statistics, Quantitative Finance, Economics, Management, Computer Science, Business Analytics, Information Security
-- **Minors (up to two):** Mathematics, Statistics, Economics, Artificial Intelligence, Computer Science, Business Analytics, Information Security, Interactive Media Development
-- **Specialisations:** CS focus areas, Business Analytics, Business AI Systems, Mathematics, Life Sciences, Economics and Electrical Engineering specialisations, each with its own sample plan (choose "No specialisation" for the general sample plan)
+- **Minors (up to three):** Mathematics, Statistics, Economics, Artificial Intelligence, Computer Science, Business Analytics, Information Security, Interactive Media Development
+- **Specialisations:** CS focus areas, Business Analytics, Business AI Systems, Mathematics, Life Sciences, Economics and Electrical Engineering specialisations, with their own sample plans. Pick more than one if you plan to do several; leave them all unticked for the general sample plan
 - **Double degrees:** the specially designed NUS double degrees plus ad hoc combinations. Adds the second degree's requirements, a 5th year and the 200-unit / 32-unit double-counting checks
 - Plan Semester 1, Semester 2 and Special Terms for 4 years (5 for a double degree), and drag courses between terms
 - Mark your current semester (or any course) as in progress, so you can see what you've completed, what you're taking now and what's still planned
