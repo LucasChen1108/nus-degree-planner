@@ -2,10 +2,10 @@
 
 A free, single-page 4-year degree planner for NUS students.
 
-- **55 majors across 5 faculties:**
+- **56 majors across 5 faculties:**
   - **Computing:** Computer Science, Artificial Intelligence, Business Analytics, Business AI Systems, Information Security
   - **Science (CHS):** Chemistry, Life Sciences, Mathematics, Physics, Statistics, Data Science & Analytics, Quantitative Finance, Food Science & Technology, Pharmaceutical Science, Data Science & Economics
-  - **Arts & Social Sciences (CHS):** Economics, Psychology, Political Science, History, Philosophy, Sociology, Anthropology, Chinese Language, Chinese Studies, Communications & New Media, English Language & Linguistics, English Literature, Geography, Global Studies, Japanese Studies, Malay Studies, Social Work, South Asian Studies, Southeast Asian Studies, Theatre & Performance Studies
+  - **Arts & Social Sciences (CHS):** Economics, Psychology, Political Science, History, Philosophy, Philosophy Politics & Economics (PPE), Sociology, Anthropology, Chinese Language, Chinese Studies, Communications & New Media, English Language & Linguistics, English Literature, Geography, Global Studies, Japanese Studies, Malay Studies, Social Work, South Asian Studies, Southeast Asian Studies, Theatre & Performance Studies
   - **Engineering (CDE):** Biomedical, Mechanical, Environmental & Sustainability, Materials Science, Industrial & Systems, Electrical, Computer, Chemical, Civil, Robotics & Machine Intelligence
   - **Business:** Finance, Marketing, Leadership & Human Capital Management, Operations & Supply Chain, Business Analytics, Business Economics, Innovation & Entrepreneurship, Accountancy, Real Estate
   - **Any other programme:** enter your own requirement groups with the Custom programme option
